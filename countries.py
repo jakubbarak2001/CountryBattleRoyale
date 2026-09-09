@@ -6,6 +6,7 @@ load_dotenv()
 
 api_key = os.getenv("MY_SECRET_KEY")
 
+#CORE GAME LOGIC
 def get_one_country(country):
     response = requests.get(
         f"https://api.restcountries.com/countries/v5/names.common/{country.lower()}",
@@ -35,19 +36,8 @@ def get_country_data(country1, country2):
     return get_one_country(country1), get_one_country(country2)
 
 
-def ask_for_country():
-    while True:
-        country_name1 = input("Enter 1st country: ")
-        country_name2 = input("Enter 2nd country: ")
-
-        try:
-            return get_country_data(country_name1, country_name2)
-        except ValueError:
-            print("Country not found, try again")
-
-
-def compare_two_countries():
-    countries_api_data = ask_for_country()
+def compare_two_countries(country1, country2):
+    countries_api_data = get_country_data(country1, country2)
 
     stats = {
         countries_api_data[0]["Name"]: {"Points": 0,
@@ -67,6 +57,18 @@ def compare_two_countries():
     elif countries_api_data[1]["Area(km)"] > countries_api_data[0]["Area(km)"]:
         stats[countries_api_data[1]["Name"]]["Points"] += 1
     return stats
+
+
+#CLI
+def ask_for_country():
+    while True:
+        country_name1 = input("Enter 1st country: ")
+        country_name2 = input("Enter 2nd country: ")
+
+        try:
+            return get_country_data(country_name1, country_name2)
+        except ValueError:
+            print("Country not found, try again")
 
 
 def display_final_score():
@@ -98,5 +100,3 @@ def display_final_score():
             f"\nPopulation: {winning_stats["Population"]}, Area(km²): {winning_stats["Area(km)"]}"
             f"\n\nThe loser is: {loser} with {losing_stats["Points"]} points."
             f"\nPopulation: {losing_stats["Population"]}, Area(km²): {losing_stats["Area(km)"]}")
-
-print(display_final_score())
