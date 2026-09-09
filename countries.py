@@ -49,47 +49,54 @@ def ask_for_country():
 def compare_two_countries():
     countries_api_data = ask_for_country()
 
-    points = {
-        countries_api_data[0]["Name"]: 0,
-        countries_api_data[1]["Name"]: 0
+    stats = {
+        countries_api_data[0]["Name"]: {"Points": 0,
+                                        "Population": countries_api_data[0]["Population"],
+                                        "Area(km)": countries_api_data[0]["Area(km)"]},
+        countries_api_data[1]["Name"]: {"Points": 0,
+                                        "Population": countries_api_data[1]["Population"],
+                                        "Area(km)": countries_api_data[1]["Area(km)"]}
     }
 
     if countries_api_data[0]["Population"] > countries_api_data[1]["Population"]:
-        points[countries_api_data[0]["Name"]] += 1
+        stats[countries_api_data[0]["Name"]]["Points"] += 1
     elif countries_api_data[1]["Population"] > countries_api_data[0]["Population"]:
-        points[countries_api_data[1]["Name"]] += 1
+        stats[countries_api_data[1]["Name"]]["Points"] += 1
     if countries_api_data[0]["Area(km)"] > countries_api_data[1]["Area(km)"]:
-        points[countries_api_data[0]["Name"]] += 1
+        stats[countries_api_data[0]["Name"]]["Points"] += 1
     elif countries_api_data[1]["Area(km)"] > countries_api_data[0]["Area(km)"]:
-        points[countries_api_data[1]["Name"]] += 1
-    return points
+        stats[countries_api_data[1]["Name"]]["Points"] += 1
+    return stats
 
 
 def display_final_score():
     final_scores = compare_two_countries()
 
     countries = list(final_scores.keys())
-    scores = list(final_scores.values())
 
     country1 = countries[0]
-    score1 = scores[0]
-
     country2 = countries[1]
-    score2 = scores[1]
+
+    score1 = final_scores[country1]["Points"]
+    score2 = final_scores[country2]["Points"]
 
     if score1 > score2:
         winner = country1
-        winning_score = score1
-        losing_score = score2
         loser = country2
+
     elif score2 > score1:
         winner = country2
-        winning_score = score2
-        losing_score = score1
         loser = country1
+
     else:
         return f"\nIt's a DRAW! {country1} and {country2} both have {score1} points."
-    return (f"\nThe winner is: {winner}! with {winning_score} points."
-            f"\nThe looser is {loser} with {losing_score} points.")
+
+    winning_stats = final_scores[winner]
+    losing_stats = final_scores[loser]
+
+    return (f"\nThe winner is: {winner} with {winning_stats["Points"]} points."
+            f"\nPopulation: {winning_stats["Population"]}, Area(km²): {winning_stats["Area(km)"]}"
+            f"\n\nThe loser is: {loser} with {losing_stats["Points"]} points."
+            f"\nPopulation: {losing_stats["Population"]}, Area(km²): {losing_stats["Area(km)"]}")
 
 print(display_final_score())
