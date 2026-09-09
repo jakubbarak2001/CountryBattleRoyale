@@ -36,18 +36,24 @@ def get_country_data(country1, country2):
 
 
 def ask_for_country():
-    country_name1 = input("Enter 1st country: ")
-    country_name2 = input("Enter 2nd country: ")
-    return [country_name1, country_name2]
+    while True:
+        country_name1 = input("Enter 1st country: ")
+        country_name2 = input("Enter 2nd country: ")
+
+        try:
+            return get_country_data(country_name1, country_name2)
+        except ValueError:
+            print("Country not found, try again")
 
 
 def compare_two_countries():
-    selected_countries = ask_for_country()
-    countries_api_data = (get_country_data(selected_countries[0], selected_countries[1]))
+    countries_api_data = ask_for_country()
+
     points = {
         countries_api_data[0]["Name"]: 0,
         countries_api_data[1]["Name"]: 0
     }
+
     if countries_api_data[0]["Population"] > countries_api_data[1]["Population"]:
         points[countries_api_data[0]["Name"]] += 1
     elif countries_api_data[1]["Population"] > countries_api_data[0]["Population"]:
