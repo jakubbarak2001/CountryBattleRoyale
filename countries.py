@@ -59,44 +59,44 @@ def compare_two_countries(country1, country2):
     return stats
 
 
-#CLI
-def ask_for_country():
-    while True:
-        country_name1 = input("Enter 1st country: ")
-        country_name2 = input("Enter 2nd country: ")
+if __name__ == "__main__":
+    def ask_for_country():
+        while True:
+            country_name1 = input("Enter 1st country: ")
+            country_name2 = input("Enter 2nd country: ")
 
-        try:
-            return get_country_data(country_name1, country_name2)
-        except ValueError:
-            print("Country not found, try again")
+            try:
+                return get_country_data(country_name1, country_name2)
+            except ValueError:
+                print("Country not found, try again")
 
 
-def display_final_score():
-    final_scores = compare_two_countries()
+    def display_final_score():
+        final_scores = compare_two_countries()
 
-    countries = list(final_scores.keys())
+        countries = list(final_scores.keys())
 
-    country1 = countries[0]
-    country2 = countries[1]
+        country1 = countries[0]
+        country2 = countries[1]
 
-    score1 = final_scores[country1]["Points"]
-    score2 = final_scores[country2]["Points"]
+        score1 = final_scores[country1]["Points"]
+        score2 = final_scores[country2]["Points"]
 
-    if score1 > score2:
-        winner = country1
-        loser = country2
+        if score1 > score2:
+            winner = country1
+            loser = country2
 
-    elif score2 > score1:
-        winner = country2
-        loser = country1
+        elif score2 > score1:
+            winner = country2
+            loser = country1
 
-    else:
-        return f"\nIt's a DRAW! {country1} and {country2} both have {score1} points."
+        else:
+            return f"\nIt's a DRAW! {country1} and {country2} both have {score1} points."
 
-    winning_stats = final_scores[winner]
-    losing_stats = final_scores[loser]
+        winning_stats = final_scores[winner]
+        losing_stats = final_scores[loser]
 
-    return (f"\nThe winner is: {winner} with {winning_stats["Points"]} points."
-            f"\nPopulation: {winning_stats["Population"]}, Area(km²): {winning_stats["Area(km)"]}"
-            f"\n\nThe loser is: {loser} with {losing_stats["Points"]} points."
-            f"\nPopulation: {losing_stats["Population"]}, Area(km²): {losing_stats["Area(km)"]}")
+        return (f"\nThe winner is: {winner} with {winning_stats["Points"]} points."
+                f"\nPopulation: {winning_stats["Population"]}, Area(km²): {winning_stats["Area(km)"]}"
+                f"\n\nThe loser is: {loser} with {losing_stats["Points"]} points."
+                f"\nPopulation: {losing_stats["Population"]}, Area(km²): {losing_stats["Area(km)"]}")
