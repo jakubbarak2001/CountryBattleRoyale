@@ -1,3 +1,5 @@
+from random import choice
+
 import requests
 import os
 from dotenv import load_dotenv
@@ -62,6 +64,30 @@ def compare_two_countries(country1, country2):
     return stats
 
 
+def get_100_country_names():
+    countries = requests.get(
+        "https://api.restcountries.com//countries/v5?limit=100",
+        headers = {"Authorization": f"Bearer {api_key}"}
+    )
+    data = countries.json()
+    names = data['data']["objects"]
+    country_names = []
+    for n in names:
+        country_names.append(n["names"]["common"])
+    return country_names
+
+
+def select_and_compare_random_countries():
+    country_names = get_100_country_names()
+    country1 = choice(country_names)
+    while True:
+        country2 = choice(country_names)
+        if country2 != country1:
+            break
+    comparison = compare_two_countries(country1, country2)
+    return comparison
+
+
 if __name__ == "__main__":
     def ask_for_country():
         while True:
@@ -103,3 +129,5 @@ if __name__ == "__main__":
                 f"\nPopulation: {winning_stats["Population"]}, Area(km²): {winning_stats["Area(km)"]}"
                 f"\n\nThe loser is: {loser} with {losing_stats["Points"]} points."
                 f"\nPopulation: {losing_stats["Population"]}, Area(km²): {losing_stats["Area(km)"]}")
+
+print(select_and_compare_random_countries())
