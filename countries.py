@@ -28,7 +28,8 @@ def get_one_country(country):
     return {
         "Name": country_data["names"]["common"],
         "Population": country_data["population"],
-        "Area(km)": country_data["area"]["kilometers"]
+        "Area(km)": country_data["area"]["kilometers"],
+        "Flag": country_data["flag"]["emoji"]
     }
 
 
@@ -42,10 +43,12 @@ def compare_two_countries(country1, country2):
     stats = {
         countries_api_data[0]["Name"]: {"Points": 0,
                                         "Population": countries_api_data[0]["Population"],
-                                        "Area(km)": countries_api_data[0]["Area(km)"]},
+                                        "Area(km)": countries_api_data[0]["Area(km)"],
+                                        "Flag": countries_api_data[0]["Flag"]},
         countries_api_data[1]["Name"]: {"Points": 0,
                                         "Population": countries_api_data[1]["Population"],
-                                        "Area(km)": countries_api_data[1]["Area(km)"]}
+                                        "Area(km)": countries_api_data[1]["Area(km)"],
+                                        "Flag": countries_api_data[1]["Flag"]}
     }
 
     if countries_api_data[0]["Population"] > countries_api_data[1]["Population"]:
