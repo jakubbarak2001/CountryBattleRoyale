@@ -2,6 +2,7 @@
 <head>
     <meta charset="UTF-8" lang="en">
     <title>Country Battle-Royale</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <H1>Welcome to CBR! (Country Battle-Royale)</H1>
@@ -13,5 +14,11 @@
         <p></p>
         <button>FIGHT</button>
     </form>
-    <p>Outcome: {{ data }}</p>
+    Outcome: {% for country, stats in data.items() %}
+        <div class="country-card">
+            {{ stats["Flag"] }} {{ country }} - {{ stats["Points"] }} points
+            <p>Population: {{ stats["Population"] }}</p>
+            <p>Area(km²): {{ stats["Area(km)"] }}</p>
+        </div>
+    {% endfor %}
 </body>
