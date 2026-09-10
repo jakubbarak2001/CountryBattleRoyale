@@ -7,11 +7,11 @@
 <body>
     <H1>Welcome to CBR! (Country Battle-Royale)</H1>
     <H2>Which country is bigger? (Population + Area) ?</H2>
-    <p>
-    <div>COUNTRY1: {{ country_1 }}</div>
+
+    <div>COUNTRY1: {{ country_1_flag }} {{ country_1 }}</div>
     <div>OR</div>
-    <div>COUNTRY2: {{ country_2 }}</div>
-        </p>
+    <div>COUNTRY2: {{ country_2_flag }} {{ country_2 }}</div>
+
     <form method="post">
 
         <input type="hidden" name="country1" value="{{ country_1 }}">
@@ -22,9 +22,15 @@
         <button name="guess" value="country2">Country 2 wins</button>
 
     </form>
+
         {% if data %}
             <h3>Outcome:</h3>
-
+            {% if is_correct %}
+            <strong>&#9989; Correct!</strong>
+            {% else %}
+            <strong>&#10060; Wrong!</strong>
+            {% endif %}
+            <h3>Stats:</h3>
             {% for country, stats in data.items() %}
                 <div class="country-card">
                     {{ stats["Flag"] }} {{ country }} - {{ stats["Points"] }} points
@@ -33,4 +39,9 @@
                 </div>
             {% endfor %}
         {% endif %}
+
+    <form method="get">
+        <button>Next round</button>
+    </form>
+
 </body>

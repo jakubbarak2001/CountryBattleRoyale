@@ -129,5 +129,3 @@ if __name__ == "__main__":
                 f"\nPopulation: {winning_stats["Population"]}, Area(km²): {winning_stats["Area(km)"]}"
                 f"\n\nThe loser is: {loser} with {losing_stats["Points"]} points."
                 f"\nPopulation: {losing_stats["Population"]}, Area(km²): {losing_stats["Area(km)"]}")
-
-print(select_and_compare_random_countries())

@@ -19,7 +19,9 @@ def index():
             "index.html",
             data=None,
             country_1=country_1,
-            country_2=country_2
+            country_2=country_2,
+            country_1_flag=random_countries[country_1]["Flag"],
+            country_2_flag=random_countries[country_2]["Flag"]
         )
 
     if request.method == "POST":
@@ -32,12 +34,25 @@ def index():
         print(country_1)
         print(country_2)
         print(guess)
+        is_correct = False
+        if guess == "country1":
+            if battle_data[country_1]["Points"] > battle_data[country_2]["Points"]:
+                is_correct = True
+        if guess == "country2":
+            if battle_data[country_2]["Points"] > battle_data[country_1]["Points"]:
+                is_correct = True
+        if guess == "draw":
+            if battle_data[country_1]["Points"] == battle_data[country_2]["Points"]:
+                is_correct = True
 
         return render_template(
             "index.html",
             data=battle_data,
+            is_correct=is_correct,
             country_1=country_1,
-            country_2=country_2
+            country_2=country_2,
+            country_1_flag=battle_data[country_1]["Flag"],
+            country_2_flag=battle_data[country_2]["Flag"]
         )
 
 
