@@ -1,47 +1,105 @@
-<!Doctype html>
+{% macro icon(name, extra_class='') -%}
+<svg class="icon {{ extra_class }}" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+    {% if name == 'globe' %}
+    <circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6.5a16 16 0 0 0 14 0M5 17.5a16 16 0 0 1 14 0"/>
+    {% elif name == 'shuffle' %}
+    <path d="m17 3 4 4-4 4m0 2 4 4-4 4M3 7h3c5 0 7 10 12 10h3M3 17h3c2 0 3.5-2 5-5m2-3c1.5-1.5 3-2 5-2h3"/>
+    {% elif name == 'users' %}
+    <circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 4v2"/>
+    {% elif name == 'area' %}
+    <path d="m3 7 6-3 6 3 6-3v13l-6 3-6-3-6 3V7Zm6-3v13m6-10v13"/>
+    {% elif name == 'equal' %}
+    <path d="M5 8h14M5 16h14"/>
+    {% elif name == 'check' %}
+    <path d="m5 12 4 4L19 6"/>
+    {% elif name == 'close' %}
+    <path d="m6 6 12 12M6 18 18 6"/>
+    {% endif %}
+</svg>
+{%- endmacro %}
+
+{% macro country_card(country, flag, choice, number) -%}
+<article class="country-card country-card--{{ number }}" aria-labelledby="country-{{ number }}">
+    <div class="country-card__top">
+        <span class="contender-label"><span class="contender-dot"></span>COUNTRY {{ number }}</span>
+        {% if data %}
+        <span class="points-badge">{{ data[country]['Points'] }} {{ 'point' if data[country]['Points'] == 1 else 'points' }}</span>
+        {% endif %}
+    </div>
+    <div class="country-identity">
+        <div class="flag-orbit" aria-hidden="true">
+            <span class="orbit-spark orbit-spark--one">✦</span>
+            <span class="country-flag">{{ flag }}</span>
+            <span class="orbit-spark orbit-spark--two">✧</span>
+        </div>
+        <h2 id="country-{{ number }}">{{ country }}</h2>
+    </div>
+    <dl class="country-stats">
+        <div class="country-stat">
+            <dt>{{ icon('users') }}Population</dt>
+            <dd>{% if data %}{{ '{:,}'.format(data[country]['Population']) }}{% else %}<span class="mystery-value" aria-label="Hidden until you guess">? ? ?</span>{% endif %}</dd>
+        </div>
+        <div class="country-stat">
+            <dt>{{ icon('area') }}Area <span class="stat-unit">(km²)</span></dt>
+            <dd>{% if data %}{{ '{:,}'.format(data[country]['Area(km)']) }}{% else %}<span class="mystery-value" aria-label="Hidden until you guess">? ? ?</span>{% endif %}</dd>
+        </div>
+    </dl>
+    <button class="country-choice" type="submit" name="guess" value="{{ choice }}">
+        <span>{{ country }}</span>
+    </button>
+</article>
+{%- endmacro %}
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8" lang="en">
-    <title>Country Battle-Royale</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#faf9f2">
+    <meta name="description" content="Which country is bigger? Compare population and area and choose the winner.">
+    <title>Country Battle Royale</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <H1>Welcome to CBR! (Country Battle-Royale)</H1>
-    <H2>Which country is bigger? (Population + Area) ?</H2>
-
-    <div>COUNTRY1: {{ country_1_flag }} {{ country_1 }}</div>
-    <div>OR</div>
-    <div>COUNTRY2: {{ country_2_flag }} {{ country_2 }}</div>
-
-    <form method="post">
-
-        <input type="hidden" name="country1" value="{{ country_1 }}">
-        <input type="hidden" name="country2" value="{{ country_2 }}">
-
-        <button name="guess" value="country1">Country 1 wins</button>
-        <button name="guess" value="draw">It's a draw</button>
-        <button name="guess" value="country2">Country 2 wins</button>
-
-    </form>
-
-        {% if data %}
-            <h3>Outcome:</h3>
-            {% if is_correct %}
-            <strong>&#9989; Correct!</strong>
-            {% else %}
-            <strong>&#10060; Wrong!</strong>
-            {% endif %}
-            <h3>Stats:</h3>
-            {% for country, stats in data.items() %}
-                <div class="country-card">
-                    {{ stats["Flag"] }} {{ country }} - {{ stats["Points"] }} points
-                    <p>Population: {{ stats["Population"] }}</p>
-                    <p>Area(km²): {{ stats["Area(km)"] }}</p>
+    <a class="skip-link" href="#arena">Skip to the game</a>
+    <header class="site-header page-width">
+        <a class="brand" href="{{ url_for('index') }}" aria-label="Country Battle Royale home">
+            <span class="brand-mark">{{ icon('globe') }}</span>
+            <span class="brand-name">Country<br>Battle Royale<span class="brand-period">.</span></span>
+        </a>
+    </header>
+    <main class="page-width">
+        <section class="arena" id="arena" aria-labelledby="page-title" tabindex="-1">
+            <div class="game-heading">
+                <h1 id="page-title">Which country is bigger?</h1>
+                <p class="game-description">Population + area · 1 point for each larger stat.</p>
+            </div>
+            {% if data %}
+            <div class="result-message {{ 'result-message--correct' if is_correct else 'result-message--incorrect' }}" role="status">
+                <span class="result-icon">{{ icon('check' if is_correct else 'close') }}</span>
+                <div>
+                    <h2>{{ 'Correct!' if is_correct else 'Not quite.' }}</h2>
+                    <p>{% if data[country_1]['Points'] == data[country_2]['Points'] %}It's a draw — {{ data[country_1]['Points'] }} {{ 'point' if data[country_1]['Points'] == 1 else 'points' }} each.{% elif data[country_1]['Points'] > data[country_2]['Points'] %}{{ country_1 }} takes this round, {{ data[country_1]['Points'] }} to {{ data[country_2]['Points'] }}.{% else %}{{ country_2 }} takes this round, {{ data[country_2]['Points'] }} to {{ data[country_1]['Points'] }}.{% endif %}</p>
                 </div>
-            {% endfor %}
-        {% endif %}
-
-    <form method="get">
-        <button>Next round</button>
-    </form>
-
+            </div>
+            {% endif %}
+            <form id="guess-form" class="guess-form" method="post" action="{{ url_for('index') }}">
+                <input type="hidden" name="country1" value="{{ country_1 }}">
+                <input type="hidden" name="country2" value="{{ country_2 }}">
+                <div class="matchup">
+                    {{ country_card(country_1, country_1_flag, 'country1', '01') }}
+                    <span class="versus" aria-label="versus">vs<span aria-hidden="true">.</span></span>
+                    {{ country_card(country_2, country_2_flag, 'country2', '02') }}
+                </div>
+            </form>
+            <div class="round-actions">
+                <button class="round-action-button" type="submit" form="guess-form" name="guess" value="draw">{{ icon('equal') }} Call it a draw</button>
+                <form method="get" action="{{ url_for('index') }}">
+                    <button class="round-action-button round-action-button--new" type="submit">{{ icon('shuffle') }} New matchup</button>
+                </form>
+            </div>
+        </section>
+    </main>
 </body>
+</html>
