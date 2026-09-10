@@ -6,19 +6,31 @@
 </head>
 <body>
     <H1>Welcome to CBR! (Country Battle-Royale)</H1>
+    <H2>Which country is bigger? (Population + Area) ?</H2>
+    <p>
+    <div>COUNTRY1: {{ country_1 }}</div>
+    <div>OR</div>
+    <div>COUNTRY2: {{ country_2 }}</div>
+        </p>
     <form method="post">
-        <p>Enter country #1</p>
-        <input type="text" name="country1" required>
-        <p>Enter country #2</p>
-        <input type="text" name="country2" required>
-        <p></p>
-        <button>FIGHT</button>
+
+        <input type="hidden" name="country1" value="{{ country_1 }}">
+        <input type="hidden" name="country2" value="{{ country_2 }}">
+
+        <button name="guess" value="country1">Country 1 wins</button>
+        <button name="guess" value="draw">It's a draw</button>
+        <button name="guess" value="country2">Country 2 wins</button>
+
     </form>
-    Outcome: {% for country, stats in data.items() %}
-        <div class="country-card">
-            {{ stats["Flag"] }} {{ country }} - {{ stats["Points"] }} points
-            <p>Population: {{ stats["Population"] }}</p>
-            <p>Area(km²): {{ stats["Area(km)"] }}</p>
-        </div>
-    {% endfor %}
+        {% if data %}
+            <h3>Outcome:</h3>
+
+            {% for country, stats in data.items() %}
+                <div class="country-card">
+                    {{ stats["Flag"] }} {{ country }} - {{ stats["Points"] }} points
+                    <p>Population: {{ stats["Population"] }}</p>
+                    <p>Area(km²): {{ stats["Area(km)"] }}</p>
+                </div>
+            {% endfor %}
+        {% endif %}
 </body>
