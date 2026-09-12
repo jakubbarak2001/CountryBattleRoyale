@@ -1,3 +1,4 @@
+import json
 from random import choice
 
 import requests
@@ -86,6 +87,34 @@ def select_and_compare_random_countries():
             break
     comparison = compare_two_countries(country1, country2)
     return comparison
+
+
+def cache_data():
+    response1 = requests.get(
+        "https://api.restcountries.com/countries/v5?limit=100",
+        headers={"Authorization": f"Bearer {api_key}"},
+        timeout=10
+    )
+    response1.raise_for_status()
+
+    response2 = requests.get(
+        "https://api.restcountries.com/countries/v5?limit=100&offset=100",
+        headers={"Authorization": f"Bearer {api_key}"},
+        timeout=10
+    )
+    response2.raise_for_status()
+
+    response3 = requests.get(
+        "https://api.restcountries.com/countries/v5?limit=100&offset=200",
+        headers={"Authorization": f"Bearer {api_key}"},
+        timeout=10
+    )
+    response3.raise_for_status()
+
+    countries = response1.json()["data"]["objects"] + response2.json()["data"]["objects"] + response3.json()["data"]["objects"]
+
+    with open("countries.json", "w", encoding="utf-8") as file:
+        json.dump(countries, file, indent=2)
 
 
 if __name__ == "__main__":
