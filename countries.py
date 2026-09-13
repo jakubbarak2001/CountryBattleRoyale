@@ -1,5 +1,6 @@
 import json
-from random import choice
+import time
+from random import choice, sample
 
 import requests
 import os
@@ -11,29 +12,21 @@ api_key = os.getenv("MY_SECRET_KEY")
 
 #CORE GAME LOGIC
 def get_one_country(country):
-    response = requests.get(
-        f"https://api.restcountries.com/countries/v5/names.common/{country.lower()}",
-        headers={"Authorization": f"Bearer {api_key}"}
-    )
+    if not os.path.exists("countries.json") or check_cache_age():
+        cache_data()
 
-    data = response.json()
-    if not data["data"]["objects"]:
-        response = requests.get(
-            f"https://api.restcountries.com/countries/v5/names.alternates/{country.lower()}",
-            headers={"Authorization": f"Bearer {api_key}"}
-        )
+    with open("countries.json", "r", encoding="utf-8") as file:
+        data = json.load(file)
+        for country_data in data["countries"]:
+            if country_data["names"]["common"].lower() == country.lower():
+                return {
+                    "Name": country_data["names"]["common"],
+                    "Population": country_data["population"],
+                    "Area(km)": country_data["area"]["kilometers"],
+                    "Flag": country_data["flag"]["emoji"]
+                }
 
-        data = response.json()
-        if not data["data"]["objects"]:
-            raise ValueError("This country was not found.")
-    country_data = data["data"]["objects"][0]
-
-    return {
-        "Name": country_data["names"]["common"],
-        "Population": country_data["population"],
-        "Area(km)": country_data["area"]["kilometers"],
-        "Flag": country_data["flag"]["emoji"]
-    }
+    raise ValueError("This country was not found.")
 
 
 def get_country_data(country1, country2):
@@ -65,29 +58,21 @@ def compare_two_countries(country1, country2):
     return stats
 
 
-def get_100_country_names():
-    countries = requests.get(
-        "https://api.restcountries.com//countries/v5?limit=100",
-        headers = {"Authorization": f"Bearer {api_key}"}
-    )
-    data = countries.json()
-    names = data['data']["objects"]
-    country_names = []
-    for n in names:
-        country_names.append(n["names"]["common"])
-    return country_names
-
-
 def select_and_compare_random_countries():
-    country_names = get_100_country_names()
-    country1 = choice(country_names)
-    while True:
-        country2 = choice(country_names)
-        if country2 != country1:
-            break
-    comparison = compare_two_countries(country1, country2)
-    return comparison
+    if not os.path.exists("countries.json") or check_cache_age():
+        cache_data()
 
+    with open("countries.json", "r", encoding="UTF-8") as file:
+        country_data = json.load(file)
+
+    country_names = [
+        country["names"]["common"]
+        for country in country_data["countries"]
+    ]
+
+    country1, country2 = sample(country_names, 2)
+
+    return compare_two_countries(country1, country2)
 
 def cache_data():
     response1 = requests.get(
@@ -111,11 +96,24 @@ def cache_data():
     )
     response3.raise_for_status()
 
+    timestamp = time.time()
     countries = response1.json()["data"]["objects"] + response2.json()["data"]["objects"] + response3.json()["data"]["objects"]
+    countries_timestamp = {"timestamp": timestamp, "countries": countries}
 
     with open("countries.json", "w", encoding="utf-8") as file:
-        json.dump(countries, file, indent=2)
+        json.dump(countries_timestamp, file, indent=2)
 
+
+def check_cache_age():
+    with open("countries.json", "r") as file:
+        old = False
+        data = json.load(file)
+        timestamp = data['timestamp']
+        current_time = time.time()
+        one_week_seconds = 604800
+        if current_time - timestamp > one_week_seconds:
+            old = True
+        return old
 
 if __name__ == "__main__":
     def ask_for_country():
