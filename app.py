@@ -1,9 +1,13 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session
+import os
+from dotenv import load_dotenv
 
 from countries import compare_two_countries, select_and_compare_random_countries
 
-app = Flask(__name__)
+load_dotenv()
 
+app = Flask(__name__)
+app.config["SECRET_KEY"] = os.environ["FLASK_SECRET_KEY"]
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -18,6 +22,7 @@ def index():
         return render_template(
             "index.html",
             data=None,
+            streak=session.get("streak", 0),
             country_1=country_1,
             country_2=country_2,
             country_1_flag=random_countries[country_1]["Flag"],
@@ -45,10 +50,16 @@ def index():
             if battle_data[country_1]["Points"] == battle_data[country_2]["Points"]:
                 is_correct = True
 
+        if is_correct:
+            session["streak"] = session.get("streak", 0) + 1
+        else:
+            session["streak"] = 0
+
         return render_template(
             "index.html",
             data=battle_data,
             is_correct=is_correct,
+            streak=session.get("streak", 0),
             country_1=country_1,
             country_2=country_2,
             country_1_flag=battle_data[country_1]["Flag"],

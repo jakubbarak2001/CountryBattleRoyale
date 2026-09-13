@@ -68,6 +68,27 @@
             <span class="brand-mark">{{ icon('globe') }}</span>
             <span class="brand-name">Country<br>Battle Royale<span class="brand-period">.</span></span>
         </a>
+        {% set streak_level = 'blazing' if streak >= 10 else 'hot' if streak >= 5 else 'warm' if streak > 0 else 'idle' %}
+        <div class="streak-counter streak-counter--{{ streak_level }}" role="status" aria-live="polite" aria-atomic="true" aria-label="Current streak: {{ streak }} correct {{ 'guess' if streak == 1 else 'guesses' }} in a row">
+            <span class="streak-counter__flame" aria-hidden="true">
+                <svg class="streak-fire" width="44" height="52" viewBox="0 0 48 56" fill="none" focusable="false">
+                    <defs>
+                        <linearGradient id="streak-flame-gradient" x1="24" y1="5" x2="24" y2="52" gradientUnits="userSpaceOnUse">
+                            <stop class="streak-fire__tip"/>
+                            <stop class="streak-fire__base" offset="1"/>
+                        </linearGradient>
+                    </defs>
+                    <path class="streak-fire__outer" d="M27 4C30 16 16 19 17 29C12 27 10 23 10 20C3 29 4 40 12 47C19 54 31 54 38 46C46 37 42 26 35 20C36 26 33 30 29 31C33 20 33 12 27 4Z" fill="url(#streak-flame-gradient)" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path class="streak-fire__core" d="M25 29C26 35 19 37 18 42C17 46 20 50 25 50C30 50 33 46 32 42C31 39 29 37 28 36C29 40 26 42 24 41C27 37 27 33 25 29Z"/>
+                </svg>
+                <span class="streak-counter__spark streak-counter__spark--one">✦</span>
+                <span class="streak-counter__spark streak-counter__spark--two">✧</span>
+            </span>
+            <span class="streak-counter__details" aria-hidden="true">
+                <span class="streak-counter__label">Win streak</span>
+                <span class="streak-counter__total"><span class="streak-counter__number">{{ streak }}</span><span class="streak-counter__unit">in a row</span></span>
+            </span>
+        </div>
     </header>
     <main class="page-width">
         <section class="arena" id="arena" aria-labelledby="page-title" tabindex="-1">
