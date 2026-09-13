@@ -13,11 +13,13 @@ app.config["SECRET_KEY"] = os.environ["FLASK_SECRET_KEY"]
 def index():
 
     if request.method == "GET":
-        random_countries = select_and_compare_random_countries()
-        country_names = list(random_countries.keys())
+        if "current_countries" not in session or session.get("answered", False):
+            random_countries = select_and_compare_random_countries()
+            session["current_countries"] = list(random_countries.keys())
+            session["answered"] = False
 
-        country_1 = country_names[0]
-        country_2 = country_names[1]
+        country_1, country_2 = session["current_countries"]
+        random_countries = compare_two_countries(country_1, country_2)
 
         return render_template(
             "index.html",
@@ -50,10 +52,15 @@ def index():
             if battle_data[country_1]["Points"] == battle_data[country_2]["Points"]:
                 is_correct = True
 
-        if is_correct:
+
+        if is_correct and not session["answered"]:
             session["streak"] = session.get("streak", 0) + 1
-        else:
+        elif not is_correct and not session["answered"]:
             session["streak"] = 0
+        elif session["answered"]:
+            print("You have already answered!")
+
+        session["answered"] = True
 
         return render_template(
             "index.html",
