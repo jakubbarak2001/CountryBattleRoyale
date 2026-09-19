@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, session
 import os
 from dotenv import load_dotenv
 
+from backend.db import create_user
 from countries import compare_two_countries, select_and_compare_random_countries
 
 load_dotenv()
@@ -72,6 +73,22 @@ def index():
             country_1_flag=battle_data[country_1]["Flag"],
             country_2_flag=battle_data[country_2]["Flag"]
         )
+
+
+@app.route("/register", methods=["POST"])
+def register():
+
+    if request.method == "POST":
+        name = request.form["username"]
+        create_user(request.form["username"], request.form["password"], request.form["email"])
+
+        return render_template("registration_success.html",
+                               name=name)
+
+
+@app.route("/login", methods=["POST"])
+def login():
+    pass
 
 
 if __name__ == "__main__":

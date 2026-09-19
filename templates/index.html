@@ -138,7 +138,7 @@
         <span class="auth-mark" aria-hidden="true">{{ icon('globe') }}</span>
         <h2 id="register-title">Join the battle<span class="brand-period">.</span></h2>
         <p class="auth-intro" id="register-description">Your next matchup is waiting.</p>
-        <form id="register-form" class="auth-form" method="dialog">
+        <form id="register-form" class="auth-form" method="post" action="/register">
             <div class="auth-field">
                 <label for="register-username">Username</label>
                 <input id="register-username" name="username" type="text" autocomplete="username" placeholder="Choose your player name" required autofocus>
@@ -156,8 +156,6 @@
                 <p class="auth-hint" id="register-password-hint">Use at least 8 characters.</p>
             </div>
             <button class="auth-submit" type="submit">Create account</button>
-            <p class="auth-note">Registration is coming soon. You can still play as a guest.</p>
-            <p class="auth-status" id="register-status" role="status" hidden></p>
         </form>
         <button class="auth-guest" type="button" data-close-auth>Keep playing as a guest</button>
     </dialog>
@@ -166,7 +164,7 @@
         <span class="auth-mark" aria-hidden="true">{{ icon('login') }}</span>
         <h2 id="login-title">Welcome back<span class="brand-period">.</span></h2>
         <p class="auth-intro" id="login-description">Ready for another matchup?</p>
-        <form id="login-form" class="auth-form" method="dialog">
+        <form id="login-form" class="auth-form" method="post" action="/login">
             <div class="auth-field">
                 <label for="login-username">Username</label>
                 <input id="login-username" name="username" type="text" autocomplete="username" placeholder="Your player name" required autofocus>
@@ -179,8 +177,6 @@
                 </div>
             </div>
             <button class="auth-submit auth-submit--login" type="submit">Log in</button>
-            <p class="auth-note">Login is coming soon. You can still play as a guest.</p>
-            <p class="auth-status" id="login-status" role="status" hidden></p>
         </form>
         <button class="auth-guest" type="button" data-close-auth>Keep playing as a guest</button>
     </dialog>

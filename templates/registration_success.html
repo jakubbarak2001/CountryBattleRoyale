@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#faf9f2">
+    <title>Registration complete | Country Battle Royale</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="success-page">
+    <a class="skip-link" href="#registration-success">Skip to confirmation</a>
+    <header class="site-header page-width">
+        <a class="brand" href="{{ url_for('index') }}" aria-label="Country Battle Royale home">
+            <span class="brand-mark">
+                <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6.5a16 16 0 0 0 14 0M5 17.5a16 16 0 0 1 14 0"/>
+                </svg>
+            </span>
+            <span class="brand-name">Country<br>Battle Royale<span class="brand-period">.</span></span>
+        </a>
+    </header>
+    <main class="success-main page-width">
+        <section class="success-card" id="registration-success" aria-labelledby="success-title" tabindex="-1">
+            <div class="success-mark" aria-hidden="true">
+                <svg class="icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m5 12 4 4L19 6"/>
+                </svg>
+            </div>
+            <h1 id="success-title">Hello, {{ name }}<span class="brand-period">!</span></h1>
+            <p>Your account has been created. Let the country battles begin.</p>
+            <a class="auth-button success-link" href="{{ url_for('index') }}">Back to game</a>
+        </section>
+    </main>
+</body>
+</html>
