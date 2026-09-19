@@ -6,7 +6,7 @@ from countries import compare_two_countries, select_and_compare_random_countries
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="../templates", static_folder="../static")
 app.config["SECRET_KEY"] = os.environ["FLASK_SECRET_KEY"]
 
 @app.route("/", methods=["GET", "POST"])
