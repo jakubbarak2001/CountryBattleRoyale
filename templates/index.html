@@ -14,6 +14,8 @@
     <path d="m5 12 4 4L19 6"/>
     {% elif name == 'close' %}
     <path d="m6 6 12 12M6 18 18 6"/>
+    {% elif name == 'login' %}
+    <path d="M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5M3 12h12m-4-4 4 4-4 4"/>
     {% endif %}
 </svg>
 {%- endmacro %}
@@ -60,6 +62,7 @@
     <title>Country Battle Royale</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='auth.js') }}" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#arena">Skip to the game</a>
@@ -88,6 +91,14 @@
                 <span class="streak-counter__label">Win streak</span>
                 <span class="streak-counter__total"><span class="streak-counter__number">{{ streak }}</span><span class="streak-counter__unit">in a row</span></span>
             </span>
+        </div>
+        <div class="auth-actions">
+            <button class="auth-button" id="open-register" type="button" aria-haspopup="dialog" aria-controls="register-dialog">
+                {{ icon('users') }} Register
+            </button>
+            <button class="auth-button auth-button--login" id="open-login" type="button" aria-haspopup="dialog" aria-controls="login-dialog">
+                {{ icon('login') }} Login
+            </button>
         </div>
     </header>
     <main class="page-width">
@@ -122,5 +133,56 @@
             </div>
         </section>
     </main>
+    <dialog class="auth-dialog" id="register-dialog" aria-labelledby="register-title" aria-describedby="register-description">
+        <button class="auth-close" type="button" data-close-auth aria-label="Close registration">{{ icon('close') }}</button>
+        <span class="auth-mark" aria-hidden="true">{{ icon('globe') }}</span>
+        <h2 id="register-title">Join the battle<span class="brand-period">.</span></h2>
+        <p class="auth-intro" id="register-description">Your next matchup is waiting.</p>
+        <form id="register-form" class="auth-form" method="dialog">
+            <div class="auth-field">
+                <label for="register-username">Username</label>
+                <input id="register-username" name="username" type="text" autocomplete="username" placeholder="Choose your player name" required autofocus>
+            </div>
+            <div class="auth-field">
+                <label for="register-email">Email</label>
+                <input id="register-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+            </div>
+            <div class="auth-field">
+                <label for="register-password">Password</label>
+                <div class="auth-password">
+                    <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" aria-describedby="register-password-hint" placeholder="Create a password" required>
+                    <button class="auth-password-toggle" id="toggle-register-password" type="button" aria-controls="register-password" aria-label="Show password" aria-pressed="false">Show</button>
+                </div>
+                <p class="auth-hint" id="register-password-hint">Use at least 8 characters.</p>
+            </div>
+            <button class="auth-submit" type="submit">Create account</button>
+            <p class="auth-note">Registration is coming soon. You can still play as a guest.</p>
+            <p class="auth-status" id="register-status" role="status" hidden></p>
+        </form>
+        <button class="auth-guest" type="button" data-close-auth>Keep playing as a guest</button>
+    </dialog>
+    <dialog class="auth-dialog auth-dialog--login" id="login-dialog" aria-labelledby="login-title" aria-describedby="login-description">
+        <button class="auth-close" type="button" data-close-auth aria-label="Close login">{{ icon('close') }}</button>
+        <span class="auth-mark" aria-hidden="true">{{ icon('login') }}</span>
+        <h2 id="login-title">Welcome back<span class="brand-period">.</span></h2>
+        <p class="auth-intro" id="login-description">Ready for another matchup?</p>
+        <form id="login-form" class="auth-form" method="dialog">
+            <div class="auth-field">
+                <label for="login-username">Username</label>
+                <input id="login-username" name="username" type="text" autocomplete="username" placeholder="Your player name" required autofocus>
+            </div>
+            <div class="auth-field">
+                <label for="login-password">Password</label>
+                <div class="auth-password">
+                    <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Your password" required>
+                    <button class="auth-password-toggle" id="toggle-login-password" type="button" aria-controls="login-password" aria-label="Show password" aria-pressed="false">Show</button>
+                </div>
+            </div>
+            <button class="auth-submit auth-submit--login" type="submit">Log in</button>
+            <p class="auth-note">Login is coming soon. You can still play as a guest.</p>
+            <p class="auth-status" id="login-status" role="status" hidden></p>
+        </form>
+        <button class="auth-guest" type="button" data-close-auth>Keep playing as a guest</button>
+    </dialog>
 </body>
 </html>
