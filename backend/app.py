@@ -10,6 +10,19 @@ load_dotenv()
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
 app.config["SECRET_KEY"] = os.environ["FLASK_SECRET_KEY"]
 
+def get_game_context():
+    country_1, country_2 = session["current_countries"]
+    random_countries = compare_two_countries(country_1, country_2)
+
+    return {
+        "country_1": country_1,
+        "country_2": country_2,
+        "country_1_flag": random_countries[country_1]["Flag"],
+        "country_2_flag": random_countries[country_2]["Flag"],
+        "streak": session.get("streak", 0),
+        "data": None,
+    }
+
 @app.route("/", methods=["GET", "POST"])
 def index():
 
@@ -19,17 +32,9 @@ def index():
             session["current_countries"] = list(random_countries.keys())
             session["answered"] = False
 
-        country_1, country_2 = session["current_countries"]
-        random_countries = compare_two_countries(country_1, country_2)
-
         return render_template(
             "index.html",
-            data=None,
-            streak=session.get("streak", 0),
-            country_1=country_1,
-            country_2=country_2,
-            country_1_flag=random_countries[country_1]["Flag"],
-            country_2_flag=random_countries[country_2]["Flag"]
+            **get_game_context(),
         )
 
     if request.method == "POST":
@@ -39,9 +44,6 @@ def index():
 
         battle_data = compare_two_countries(country_1, country_2)
 
-        print(country_1)
-        print(country_2)
-        print(guess)
         is_correct = False
         if guess == "country1":
             if battle_data[country_1]["Points"] > battle_data[country_2]["Points"]:
@@ -73,7 +75,6 @@ def index():
             country_1_flag=battle_data[country_1]["Flag"],
             country_2_flag=battle_data[country_2]["Flag"]
         )
-
 
 @app.route("/register", methods=["POST"])
 def register():
