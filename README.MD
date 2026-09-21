@@ -42,9 +42,7 @@ Open [localhost:5000](http://127.0.0.1:5000). Country data is cached for seven d
 
 ## Account features
 
-Registration submits to `/register`, creates a user through `backend/db.py`, and displays a personalized welcome page. It uses PostgreSQL, Psycopg 3, and Argon2. Login submits to `/login`, but that handler is still a placeholder. Login sessions and registration error handling are not implemented yet.
-
-Registration requires `DATABASE_URL` and a PostgreSQL `users` table with `id`, `username`, `pass_hash`, `email`, and `created_at`; the ID and timestamp must be generated automatically. PostgreSQL is optional for playing the game.
+Registration works with PostgreSQL, Argon2 password hashing, and inline errors for duplicate usernames or emails. Requires `DATABASE_URL` and a configured `users` table. Login is not implemented yet.
 
 ## Tests
 
