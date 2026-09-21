@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, session
+import psycopg.errors
+from flask import Flask, render_template, request, session, jsonify
 import os
 from dotenv import load_dotenv
 
@@ -9,6 +10,7 @@ load_dotenv()
 
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
 app.config["SECRET_KEY"] = os.environ["FLASK_SECRET_KEY"]
+
 
 def get_game_context():
     country_1, country_2 = session["current_countries"]
@@ -81,10 +83,21 @@ def register():
 
     if request.method == "POST":
         name = request.form["username"]
-        create_user(request.form["username"], request.form["password"], request.form["email"])
+        try:
+            create_user(request.form["username"], request.form["password"], request.form["email"])
 
-        return render_template("registration_success.html",
-                               name=name)
+            return jsonify(success=True, name=name), 201
+
+        except psycopg.errors.UniqueViolation as exc:
+            error = exc.diag.constraint_name
+
+            if error == "users_username_key":
+                errors = {"username": "The username is already taken!"}
+            elif error == "users_email_key":
+                errors = {"email": "The email is already taken!"}
+            else:
+                errors = {"form": "Something went wrong."}
+        return jsonify(errors=errors), 409
 
 
 @app.route("/login", methods=["POST"])
