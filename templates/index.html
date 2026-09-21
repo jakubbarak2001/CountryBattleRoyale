@@ -133,19 +133,24 @@
             </div>
         </section>
     </main>
+    {% set registration_errors = registration_errors|default({}, true) %}
+    {% set registration_values = registration_values|default({}, true) %}
     <dialog class="auth-dialog" id="register-dialog" aria-labelledby="register-title" aria-describedby="register-description">
         <button class="auth-close" type="button" data-close-auth aria-label="Close registration">{{ icon('close') }}</button>
         <span class="auth-mark" aria-hidden="true">{{ icon('globe') }}</span>
         <h2 id="register-title">Join the battle<span class="brand-period">.</span></h2>
         <p class="auth-intro" id="register-description">Your next matchup is waiting.</p>
         <form id="register-form" class="auth-form" method="post" action="/register">
+            <p class="auth-error auth-error--summary" id="register-form-error" role="alert" tabindex="-1" {% if not registration_errors.get('form') %}hidden{% endif %}>{{ registration_errors.get('form', '') }}</p>
             <div class="auth-field">
                 <label for="register-username">Username</label>
-                <input id="register-username" name="username" type="text" autocomplete="username" placeholder="Choose your player name" required autofocus>
+                <input id="register-username" name="username" type="text" autocomplete="username" placeholder="Choose your player name" value="{{ registration_values.get('username', '') }}" aria-describedby="register-username-error" {% if registration_errors.get('username') %}aria-invalid="true"{% endif %} required autofocus>
+                <p class="auth-error" id="register-username-error" role="alert" {% if not registration_errors.get('username') %}hidden{% endif %}>{{ registration_errors.get('username', '') }}</p>
             </div>
             <div class="auth-field">
                 <label for="register-email">Email</label>
-                <input id="register-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+                <input id="register-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" value="{{ registration_values.get('email', '') }}" aria-describedby="register-email-error" {% if registration_errors.get('email') %}aria-invalid="true"{% endif %} required>
+                <p class="auth-error" id="register-email-error" role="alert" {% if not registration_errors.get('email') %}hidden{% endif %}>{{ registration_errors.get('email', '') }}</p>
             </div>
             <div class="auth-field">
                 <label for="register-password">Password</label>
@@ -157,6 +162,10 @@
             </div>
             <button class="auth-submit" type="submit">Create account</button>
         </form>
+        <div class="auth-success" id="register-success" role="status" tabindex="-1" hidden>
+            <h3>{{ icon('check') }} Account created!</h3>
+            <p id="register-success-message"></p>
+        </div>
         <button class="auth-guest" type="button" data-close-auth>Keep playing as a guest</button>
     </dialog>
     <dialog class="auth-dialog auth-dialog--login" id="login-dialog" aria-labelledby="login-title" aria-describedby="login-description">

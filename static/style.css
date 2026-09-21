@@ -135,10 +135,28 @@ body:has(.auth-dialog[open]) { overflow: hidden; }
 .auth-dialog h2 { font-size: 29px; font-weight: 900; line-height: 1.2; letter-spacing: -.8px; }
 .auth-intro { margin: 8px 0 24px; color: var(--muted); font-size: 14px; }
 .auth-form { display: grid; gap: 17px; }
+.auth-form[hidden] { display: none; }
+.auth-form[aria-busy="true"] { cursor: progress; }
+.auth-form input:disabled { opacity: .7; }
+.auth-submit:disabled { cursor: wait; opacity: .7; transform: none; box-shadow: 0 3px 0 var(--ink); }
+.auth-success { padding: 18px; border: 1px solid #b8cb9e; border-radius: 12px; background: #eaf2dc; }
+.auth-success h3 { font-size: 18px; }
+.auth-success p { margin-top: 8px; overflow-wrap: anywhere; }
 .auth-field { display: grid; gap: 6px; }
 .auth-field label { font-size: 13px; font-weight: 900; }
 .auth-field input { width: 100%; min-height: 48px; padding: 10px 13px; border: 1px solid #b6bdae; border-radius: 10px; background: #fffefa; color: var(--ink); font-size: 16px; outline-offset: 2px; }
 .auth-field input::placeholder { color: #72786b; font-size: 14px; }
+.auth-field input[aria-invalid="true"] { border-color: #a33131; background: #fff7f4; }
+.auth-error { color: #a33131; font-size: 13px; font-weight: 700; line-height: 1.45; }
+.auth-error--summary { padding: 11px 13px; border: 1px solid #dfb4ab; border-radius: 10px; background: #fff0eb; }
+/* Keep reveal in the animation list so removing the shake doesn't restart the fade. */
+.auth-dialog[open].auth-dialog--error { animation: reveal .2s ease-out, auth-shake .3s ease-out; }
+@keyframes auth-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    50% { transform: translateX(4px); }
+    75% { transform: translateX(-2px); }
+}
 .auth-password { position: relative; }
 .auth-password input { padding-right: 76px; }
 .auth-password-toggle { position: absolute; top: 50%; right: 5px; min-height: 40px; padding: 6px 10px; transform: translateY(-50%); border: 0; border-radius: 7px; background: transparent; font-size: 12px; font-weight: 900; }
