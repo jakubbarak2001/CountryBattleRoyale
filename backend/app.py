@@ -29,6 +29,10 @@ def get_game_context():
 def index():
 
     if request.method == "GET":
+
+        if session.get("logged", False):
+            print("Logged")
+
         if "current_countries" not in session or session.get("answered", False):
             random_countries = select_and_compare_random_countries()
             session["current_countries"] = list(random_countries.keys())
@@ -85,8 +89,8 @@ def register():
         name = request.form["username"]
         try:
             create_user(request.form["username"], request.form["password"], request.form["email"])
-
-            return jsonify(success=True, name=name), 201
+            session["logged"] = True
+            return jsonify(success=True, name=name, logged=session["logged"]), 201
 
         except psycopg.errors.UniqueViolation as exc:
             error = exc.diag.constraint_name
