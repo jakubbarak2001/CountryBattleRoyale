@@ -44,6 +44,30 @@ function setupAuthDialog(name) {
 setupAuthDialog("register");
 setupAuthDialog("login");
 
+const accountMenu = document.querySelector("#account-menu");
+const accountToggle = accountMenu.querySelector("summary");
+
+document.addEventListener("click", (event) => {
+    if (!accountMenu.contains(event.target)) accountMenu.open = false;
+});
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && accountMenu.open) {
+        accountMenu.open = false;
+        accountToggle.focus();
+    }
+});
+
+document.addEventListener("focusin", (event) => {
+    if (!accountMenu.contains(event.target)) accountMenu.open = false;
+});
+
+function showLoggedInAccount() {
+    // The server confirms login; this only updates the visible header.
+    document.querySelector("#guest-actions").hidden = true;
+    accountMenu.hidden = false;
+}
+
 function setupRegistration() {
     const dialog = document.querySelector("#register-dialog");
     const form = document.querySelector("#register-form");
@@ -126,6 +150,13 @@ function setupRegistration() {
             submit.textContent = "Create account";
         }
 
+        // Update the header even if registration finished after closing the dialog.
+        if (response?.ok && result?.success === true && result?.logged === true) {
+            showLoggedInAccount();
+            window.location.assign("/");
+            if (!dialog.open) accountToggle.focus();
+        }
+
         // A response from a dismissed attempt must not change a reopened form.
         if (version !== dialogVersion || !dialog.open) return;
 
@@ -166,6 +197,7 @@ function setupRegistration() {
         successMessage.textContent = "";
         guest.textContent = "Keep playing as a guest";
         dialog.classList.remove("auth-dialog--error");
+        if (!accountMenu.hidden) accountToggle.focus();
     });
 
     dialog.addEventListener("animationend", (event) => {

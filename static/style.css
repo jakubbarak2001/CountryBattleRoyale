@@ -101,6 +101,36 @@ section[tabindex="-1"]:focus { outline: none; }
 .auth-button--login:hover,
 .auth-submit--login:hover { background: #cddff3; }
 
+.auth-actions[hidden], .account-menu[hidden] { display: none; }
+.account-menu { position: relative; flex-shrink: 0; }
+.account-toggle { cursor: pointer; list-style: none; }
+.account-toggle::-webkit-details-marker { display: none; }
+.account-chevron { transition: transform .18s; }
+.account-menu[open] .account-chevron { transform: rotate(180deg); }
+.account-panel {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 14px);
+    right: 0;
+    width: min(300px, calc(100vw - 36px));
+    padding: 18px;
+    border: 1.5px solid var(--ink);
+    border-radius: 18px;
+    background: var(--paper);
+    box-shadow: 0 4px 0 #dce2d2, 0 12px 30px #293f3518;
+}
+.account-panel__heading { display: flex; align-items: center; gap: 12px; }
+.account-avatar { display: grid; place-items: center; flex-shrink: 0; width: 42px; height: 42px; border: 1px solid #b8cb9e; border-radius: 14px; background: var(--green); }
+.account-panel__title { font-size: 16px; font-weight: 900; }
+.account-panel__status, .account-panel__hint { color: var(--muted); font-size: 12px; }
+.account-panel__hint { margin-block: 16px 8px; }
+.account-links { display: grid; gap: 4px; }
+.account-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 46px; padding: 10px; border: 0; border-radius: 9px; background: transparent; text-align: left; font-size: 14px; font-weight: 800; }
+.account-item:disabled { cursor: default; color: var(--muted); }
+.account-item .icon { width: 19px; height: 19px; }
+.account-item__badge { margin-left: auto; padding: 1px 7px; border-radius: 6px; background: #eaece1; font-size: 10px; font-weight: 700; }
+.account-item--logout { margin-top: 7px; padding-top: 14px; border-top: 1px solid var(--line); border-radius: 0; }
+
 body:has(.auth-dialog[open]) { overflow: hidden; }
 .auth-dialog {
     width: min(440px, calc(100% - 32px));
@@ -420,6 +450,8 @@ body:has(.auth-dialog[open]) { overflow: hidden; }
     .page-width { width: calc(100% - 40px); }
     .site-header { flex-wrap: wrap; gap: 12px; padding-block: 12px; }
     .auth-actions { width: 100%; }
+    .account-menu { width: 100%; }
+    .account-toggle { width: 100%; }
     .country-card { padding: 19px 20px 23px; }
     .matchup { gap: 23px; }
     .country-stat dt { flex-wrap: wrap; column-gap: 4px; row-gap: 0; }
