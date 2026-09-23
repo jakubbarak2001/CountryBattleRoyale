@@ -153,7 +153,7 @@ function setupRegistration() {
         // Update the header even if registration finished after closing the dialog.
         if (response?.ok && result?.success === true && result?.logged === true) {
             showLoggedInAccount();
-            window.location.assign("/");
+            window.location.assign("/registration_success");
             if (!dialog.open) accountToggle.focus();
         }
 

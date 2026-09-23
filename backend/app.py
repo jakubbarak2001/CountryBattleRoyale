@@ -90,6 +90,7 @@ def register():
         try:
             create_user(request.form["username"], request.form["password"], request.form["email"])
             session["logged"] = True
+            session["username"] = name
             return jsonify(success=True, name=name, logged=session["logged"]), 201
 
         except psycopg.errors.UniqueViolation as exc:
@@ -103,6 +104,15 @@ def register():
                 errors = {"form": "Something went wrong."}
         return jsonify(errors=errors), 409
 
+@app.route("/registration_success", methods=["GET"])
+def registration_success():
+
+    return render_template("registration_success.html", name=session["username"])
+
+#TODO: Feat(backend) timestamp and db connection for last login
+#TODO: Feat(db) new last_login columns in existing DB
+#TODO: Add Guest opening / without missing-session-key-error TEST
+#TODO: Add Attempted registration using existing username / email causes UniqueViolation TEST
 
 @app.route("/login", methods=["POST"])
 def login():
