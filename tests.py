@@ -1,6 +1,7 @@
 from unittest import TestCase
 from unittest.mock import patch
 
+from psycopg.errors import UniqueViolation
 
 from backend.app import app
 from countries import compare_two_countries
@@ -50,3 +51,12 @@ class AuthenticationTests(TestCase):
         response = client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertIn("Register", response.get_data(as_text=True))
+
+    @patch("backend.app.create_user", side_effect=UniqueViolation)
+    def test_existing_credentials_cause_unique_violation(self, mock_error):
+        form_data = {"username": "user",
+                     "password": "12345678",
+                     "email": "user@mail.com"}
+        client = app.test_client()
+        response = client.post("/register", data=form_data)
+        self.assertEqual(response.status_code, 409)
