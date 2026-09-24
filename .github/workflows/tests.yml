@@ -1,0 +1,63 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      FLASK_SECRET_KEY: ci-test-only-secret
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Prepare country data for tests
+        # The country cache is gitignored. Seed it so tests need no API access.
+        run: |
+          python - <<'PY'
+          import json
+          import time
+          from pathlib import Path
+
+          countries = [
+              {
+                  "names": {"common": "Japan"},
+                  "population": 125_000_000,
+                  "area": {"kilometers": 377_975},
+                  "flag": {"emoji": "JP"},
+              },
+              {
+                  "names": {"common": "Germany"},
+                  "population": 83_000_000,
+                  "area": {"kilometers": 357_022},
+                  "flag": {"emoji": "DE"},
+              },
+          ]
+          Path("countries.json").write_text(
+              json.dumps({"timestamp": time.time(), "countries": countries}),
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Run tests
+        run: python -m unittest discover -v
