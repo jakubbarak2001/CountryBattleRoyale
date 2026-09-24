@@ -111,7 +111,6 @@ def registration_success():
 
 #TODO: Feat(backend) timestamp and db connection for last login
 #TODO: Feat(db) new last_login columns in existing DB
-#TODO: Add Guest opening / without missing-session-key-error TEST
 #TODO: Add Attempted registration using existing username / email causes UniqueViolation TEST
 
 @app.route("/login", methods=["POST"])

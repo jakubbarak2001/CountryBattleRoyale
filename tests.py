@@ -36,3 +36,17 @@ class AuthenticationTests(TestCase):
         page = client.get("/registration_success")
         self.assertEqual(page.status_code, 200)
         self.assertIn("Hello, user", page.get_data(as_text=True))
+
+    @patch("backend.app.select_and_compare_random_countries")
+    @patch("backend.app.compare_two_countries")
+    def test_guest_user(self, mock_compare, mock_select):
+        fake_countries = {
+            "Japan": {"Flag": "JP"},
+            "Germany": {"Flag": "DE"},
+        }
+        mock_select.return_value = fake_countries
+        mock_compare.return_value = fake_countries
+        client = app.test_client()
+        response = client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Register", response.get_data(as_text=True))
