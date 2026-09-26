@@ -213,3 +213,79 @@ function setupRegistration() {
 }
 
 setupRegistration();
+
+function setupLogin() {
+    const dialog = document.querySelector("#login-dialog");
+    const form = document.querySelector("#login-form");
+    const summary = document.querySelector("#login-form-error");
+    const submit = form.querySelector('[type="submit"]');
+    const controls = [...form.querySelectorAll("input, button")];
+    let pending = false;
+    let dialogVersion = 0;
+
+    function clearError() {
+        summary.hidden = true;
+        summary.textContent = "";
+        dialog.classList.remove("auth-dialog--error");
+    }
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (pending) return;
+
+        const body = new FormData(form);
+        const version = dialogVersion;
+        clearError();
+        pending = true;
+        controls.forEach((control) => { control.disabled = true; });
+        form.setAttribute("aria-busy", "true");
+        submit.textContent = "Logging in…";
+
+        let response;
+        let message = "We couldn't log you in. Please try again.";
+        try {
+            response = await fetch(form.action, { method: "POST", body });
+            // Login currently returns HTML on success and JSON on failure.
+            if (!response.ok) {
+                const result = await response.json();
+                if (response.status === 401 && typeof result.errors === "string" && result.errors.trim()) {
+                    message = result.errors;
+                }
+            }
+        } catch {
+            // Network failures and unexpected responses use the fallback message.
+        } finally {
+            pending = false;
+            controls.forEach((control) => { control.disabled = false; });
+            form.removeAttribute("aria-busy");
+            submit.textContent = "Log in";
+        }
+
+        if (response?.ok) {
+            showLoggedInAccount();
+            if (version === dialogVersion && dialog.open) dialog.close();
+            if (!dialog.open) accountToggle.focus();
+            return;
+        }
+
+        if (version !== dialogVersion || !dialog.open) return;
+        summary.textContent = message;
+        summary.hidden = false;
+        void dialog.offsetWidth;
+        dialog.classList.add("auth-dialog--error");
+        summary.focus();
+    });
+
+    form.addEventListener("input", clearError);
+    dialog.addEventListener("close", () => {
+        dialogVersion += 1;
+        clearError();
+    });
+    dialog.addEventListener("animationend", (event) => {
+        if (event.target === dialog && event.animationName === "auth-shake") {
+            dialog.classList.remove("auth-dialog--error");
+        }
+    });
+}
+
+setupLogin();
