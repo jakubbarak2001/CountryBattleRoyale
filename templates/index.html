@@ -206,6 +206,7 @@
         <h2 id="login-title">Welcome back<span class="brand-period">.</span></h2>
         <p class="auth-intro" id="login-description">Ready for another matchup?</p>
         <form id="login-form" class="auth-form" method="post" action="/login">
+            <p class="auth-error auth-error--summary" id="login-form-error" role="alert" tabindex="-1" hidden></p>
             <div class="auth-field">
                 <label for="login-username">Username</label>
                 <input id="login-username" name="username" type="text" autocomplete="username" placeholder="Your player name" required autofocus>
