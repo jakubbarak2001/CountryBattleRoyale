@@ -1,9 +1,11 @@
 import psycopg.errors
-from flask import Flask, render_template, request, session, jsonify
+from argon2.exceptions import VerifyMismatchError
+from flask import Flask, render_template, request, session, jsonify, url_for
 import os
 from dotenv import load_dotenv
+from werkzeug.utils import redirect
 
-from backend.db import create_user
+from backend.db import create_user, login_user
 from countries import compare_two_countries, select_and_compare_random_countries
 
 load_dotenv()
@@ -85,37 +87,53 @@ def index():
 @app.route("/register", methods=["POST"])
 def register():
 
-    if request.method == "POST":
-        name = request.form["username"]
-        try:
-            create_user(request.form["username"], request.form["password"], request.form["email"])
-            session["logged"] = True
-            session["username"] = name
-            return jsonify(success=True, name=name, logged=session["logged"]), 201
+    name = request.form["username"]
+    try:
+        create_user(request.form["username"], request.form["password"], request.form["email"])
+        session["logged"] = True
+        session["username"] = name
+        return jsonify(success=True, name=name, logged=session["logged"]), 201
 
-        except psycopg.errors.UniqueViolation as exc:
-            error = exc.diag.constraint_name
+    except psycopg.errors.UniqueViolation as exc:
+        error = exc.diag.constraint_name
 
-            if error == "users_username_key":
-                errors = {"username": "The username is already taken!"}
-            elif error == "users_email_key":
-                errors = {"email": "The email is already taken!"}
-            else:
-                errors = {"form": "Something went wrong."}
-        return jsonify(errors=errors), 409
+        if error == "users_username_key":
+            errors = {"username": "The username is already taken!"}
+        elif error == "users_email_key":
+            errors = {"email": "The email is already taken!"}
+        else:
+            errors = {"form": "Something went wrong."}
+    return jsonify(errors=errors), 409
 
 @app.route("/registration_success", methods=["GET"])
 def registration_success():
 
     return render_template("registration_success.html", name=session["username"])
 
-#TODO: Feat(backend) timestamp and db connection for last login
-#TODO: Feat(db) new last_login columns in existing DB
 
 @app.route("/login", methods=["POST"])
 def login():
-    pass
 
+    username = request.form["username"]
+    valid_login =  login_user(request.form["username"], request.form["password"])
+    if valid_login:
+        session["logged"] = True
+        session["username"] = username
+        return render_template("index.html", **get_game_context())
+
+    else:
+        errors = "Wrong username/password combination!"
+        return jsonify(errors=errors), 401
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+#AUTHENTICATION PART I:
+#TODO: Feat(backend) timestamp and db connection for last login
+#TODO: Feat(db) new last_login columns in existing DB
+#TODO: Test(auth) test_existing_credentials_cause_unique_violation on test database
+
+#AUTHENTICATION PART II:
+#TODO: Feat(backend) login
+#TODO: Feat(backend) logout
