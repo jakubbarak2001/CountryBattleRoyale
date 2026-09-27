@@ -125,13 +125,12 @@ def login():
         errors = "Wrong username/password combination!"
         return jsonify(errors=errors), 401
 
+@app.route("/logout", methods=["POST"])
+def logout():
+
+    session["logged"] = False
+    session.pop("username", None)
+    return render_template("index.html", **get_game_context())
+
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-#AUTHENTICATION PART I:
-#TODO: Feat(backend) timestamp and db connection for last login
-#TODO: Test(auth) test_existing_credentials_cause_unique_violation on test database
-
-#AUTHENTICATION PART II:
-#TODO: Feat(backend) logout

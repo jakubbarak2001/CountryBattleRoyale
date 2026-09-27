@@ -12,3 +12,6 @@ __pycache__/
 
 # Downloaded country data
 /countries.json
+
+# Local learning preferences
+/LEARNING_CONTEXT.local.md

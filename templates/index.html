@@ -126,9 +126,11 @@
                     <button class="account-item" id="account-settings" type="button" disabled>
                         {{ icon('settings') }} <span>Settings</span><span class="account-item__badge">Soon</span>
                     </button>
-                    <button class="account-item account-item--logout" id="account-logout" type="button" disabled>
-                        {{ icon('login') }} <span>Log out</span><span class="account-item__badge">Soon</span>
-                    </button>
+                    <form action="/logout" method="post">
+                        <button class="account-item account-item--logout" id="account-logout" type="submit">
+                            {{ icon('login') }} <span>Log out</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </details>
