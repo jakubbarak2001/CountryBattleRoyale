@@ -131,9 +131,7 @@ if __name__ == "__main__":
 
 #AUTHENTICATION PART I:
 #TODO: Feat(backend) timestamp and db connection for last login
-#TODO: Feat(db) new last_login columns in existing DB
 #TODO: Test(auth) test_existing_credentials_cause_unique_violation on test database
 
 #AUTHENTICATION PART II:
-#TODO: Feat(backend) login
 #TODO: Feat(backend) logout

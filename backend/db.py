@@ -23,6 +23,7 @@ def create_user(username, password, email):
 
             user_id = cur.fetchone()[0]
 
+    write_login_timestamp(user_id)
     return user_id
 
 
@@ -40,6 +41,21 @@ def login_user(entered_username, password):
                 return False
 
     try:
-        return password_hasher.verify(row[1], password)
+        verification = password_hasher.verify(row[1], password)
     except VerifyMismatchError:
         return False
+
+    if verification:
+        write_login_timestamp(row[0])
+        return True
+
+    else:
+        return False
+
+
+def write_login_timestamp(user_id):
+    with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP where id = %s",
+                        (user_id,),
+                        )
