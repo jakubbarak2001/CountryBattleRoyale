@@ -2,6 +2,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from psycopg.errors import UniqueViolation
+from requests import session
 
 from backend.app import app
 from countries import compare_two_countries
@@ -53,10 +54,50 @@ class AuthenticationTests(TestCase):
         self.assertIn("Register", response.get_data(as_text=True))
 
     @patch("backend.app.create_user", side_effect=UniqueViolation)
-    def test_existing_credentials_cause_unique_violation(self, mock_error):
+    def test_existing_credentials_cause_unique_violation(self, mock_create_user):
         form_data = {"username": "user",
                      "password": "12345678",
                      "email": "user@mail.com"}
         client = app.test_client()
         response = client.post("/register", data=form_data)
         self.assertEqual(response.status_code, 409)
+
+    def test_guest_redirection_on_registration_success(self):
+        client = app.test_client()
+        response = client.get("/registration_success")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/")
+
+    @patch("backend.app.login_user", return_value=True)
+    def test_successful_login_without_countries(self, mock_login_user):
+        form_data = {"username": "user", "password": "12345678"}
+        client = app.test_client()
+        with client.session_transaction() as saved_session:
+            self.assertNotIn("current_countries", saved_session)
+
+        response = client.post("/login", data = form_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/")
+
+        client.get(response.headers["Location"])
+        with client.session_transaction() as saved_session:
+            self.assertIn("current_countries", saved_session)
+
+    @patch("backend.app.login_user", return_value=True)
+    @patch("backend.app.compare_two_countries")
+    def test_successful_login_with_countries(self, mock_compare, mock_login_user):
+        fake_countries = {
+            "Japan": {"Flag": "JP"},
+            "Germany": {"Flag": "DE"},
+        }
+        mock_compare.return_value = fake_countries
+        client = app.test_client()
+        with client.session_transaction() as saved_session:
+            saved_session["current_countries"] = ["Japan", "Germany"]
+
+        form_data = {"username": "user", "password": "12345678"}
+        response = client.post("/login", data = form_data)
+        self.assertEqual(response.status_code, 200)
+
+        with client.session_transaction() as saved_session:
+            self.assertEqual(saved_session["current_countries"], ["Japan", "Germany"])

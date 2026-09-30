@@ -108,7 +108,10 @@ def register():
 @app.route("/registration_success", methods=["GET"])
 def registration_success():
 
-    return render_template("registration_success.html", name=session["username"])
+    if session.get("logged", False) and session.get("username"):
+        return render_template("registration_success.html", name=session["username"])
+    else:
+        return redirect("/")
 
 
 @app.route("/login", methods=["POST"])
@@ -119,6 +122,9 @@ def login():
     if valid_login:
         session["logged"] = True
         session["username"] = username
+        if "current_countries" not in session:
+            return redirect("/")
+
         return render_template("index.html", **get_game_context())
 
     else:
@@ -130,6 +136,9 @@ def logout():
 
     session["logged"] = False
     session.pop("username", None)
+    if "current_countries" not in session:
+        return redirect("/")
+
     return render_template("index.html", **get_game_context())
 
 if __name__ == "__main__":
