@@ -1,0 +1,35 @@
+{% import '_components.html' as ui with context %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f3f2ed">
+    <title>Your account | Country Battle Royale</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+    <link rel="preload" href="{{ url_for('static', filename='fonts/arena-condensed.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='auth.js') }}" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#account">Skip to your account</a>
+    {{ ui.header() }}
+    <main class="success-main page-width">
+        <section class="success-composition" id="account" aria-labelledby="account-title" tabindex="-1">
+            <div class="success-content">
+                <span class="success-mark" aria-hidden="true">{{ ui.icon('account') }}</span>
+                <p class="eyebrow">Player account</p>
+                <h1 id="account-title">Your account,<br><em>{{ name }}.</em></h1>
+                <p class="success-description">You're signed in and ready for your next matchup.</p>
+                <a class="auth-submit success-link" href="{{ url_for('index') }}">Back to the game {{ ui.icon('arrow') }}</a>
+            </div>
+            <div class="success-aside" aria-hidden="true">
+                {{ ui.icon('globe', 'success-globe') }}
+                <p>Know<br>the world.<br><span>Make<br>your call.</span></p>
+            </div>
+        </section>
+    </main>
+    <footer class="site-footer page-width"><span>Country Battle Royale</span><span>A game of scale &amp; instinct.</span></footer>
+    {% include '_auth-dialogs.html' %}
+</body>
+</html>

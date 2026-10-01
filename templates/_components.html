@@ -44,6 +44,7 @@
                 <p class="eyebrow">Player account</p>
                 <p class="account-name" id="account-name">{{ session.get('username', 'Your account') }}</p>
                 <p class="account-status">Signed in. Ready for the next round.</p>
+                <a class="auth-button auth-button--quiet" href="{{ url_for('account') }}">View account {{ icon('arrow') }}</a>
                 <form action="/logout" method="post">
                     <button class="account-logout" id="account-logout" type="submit">Log out {{ icon('login') }}</button>
                 </form>
