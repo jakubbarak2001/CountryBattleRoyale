@@ -144,14 +144,34 @@ def logout():
     return render_template("index.html", **get_game_context())
 
 
-@app.route("/account", methods=["GET"])
-def account():
+def render_account(section: str = "account"):
 
     if session.get("logged", False) and session.get("username"):
-        return render_template("account.html", name = session["username"])
+        return render_template("account.html",
+                               name = session["username"], section = section)
 
     else:
         return redirect("/")
+
+@app.route("/account", methods=["GET"])
+def account():
+    return render_account()
+
+
+@app.route("/account/stats", methods=["GET"])
+def stats():
+    return render_account("stats")
+
+
+@app.route("/account/achievements", methods=["GET"])
+def achievements():
+    return render_account("achievements")
+
+
+@app.route("/account/settings", methods=["GET"])
+def settings():
+    return render_account("settings")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
