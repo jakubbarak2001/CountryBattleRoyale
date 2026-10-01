@@ -1,3 +1,4 @@
+from http.client import responses
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -101,3 +102,21 @@ class AuthenticationTests(TestCase):
 
         with client.session_transaction() as saved_session:
             self.assertEqual(saved_session["current_countries"], ["Japan", "Germany"])
+
+    def test_guest_requests_account(self):
+        client = app.test_client()
+        response = client.get("/account")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.location, "/")
+
+    def test_logged_client_requests_account(self):
+        client = app.test_client()
+
+        with client.session_transaction() as saved_session:
+            saved_session["logged"] = True
+            saved_session["username"] = "user"
+
+        response = client.get("/account")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("user", response.get_data(as_text=True))

@@ -132,6 +132,7 @@ def login():
         errors = "Wrong username/password combination!"
         return jsonify(errors=errors), 401
 
+
 @app.route("/logout", methods=["POST"])
 def logout():
 
@@ -141,6 +142,16 @@ def logout():
         return redirect("/")
 
     return render_template("index.html", **get_game_context())
+
+
+@app.route("/account", methods=["GET"])
+def account():
+
+    if session.get("logged", False) and session.get("username"):
+        return render_template("account.html", name = session["username"])
+
+    else:
+        return redirect("/")
 
 if __name__ == "__main__":
     app.run(debug=True)
