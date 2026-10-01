@@ -1,62 +1,41 @@
-{% macro icon(name, extra_class='') -%}
-<svg class="icon {{ extra_class }}" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-    {% if name == 'globe' %}
-    <circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6.5a16 16 0 0 0 14 0M5 17.5a16 16 0 0 1 14 0"/>
-    {% elif name == 'shuffle' %}
-    <path d="m17 3 4 4-4 4m0 2 4 4-4 4M3 7h3c5 0 7 10 12 10h3M3 17h3c2 0 3.5-2 5-5m2-3c1.5-1.5 3-2 5-2h3"/>
-    {% elif name == 'users' %}
-    <circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 4v2"/>
-    {% elif name == 'area' %}
-    <path d="m3 7 6-3 6 3 6-3v13l-6 3-6-3-6 3V7Zm6-3v13m6-10v13"/>
-    {% elif name == 'equal' %}
-    <path d="M5 8h14M5 16h14"/>
-    {% elif name == 'check' %}
-    <path d="m5 12 4 4L19 6"/>
-    {% elif name == 'close' %}
-    <path d="m6 6 12 12M6 18 18 6"/>
-    {% elif name == 'login' %}
-    <path d="M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5M3 12h12m-4-4 4 4-4 4"/>
-    {% elif name == 'account' %}
-    <circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>
-    {% elif name == 'chevron' %}
-    <path d="m6 9 6 6 6-6"/>
-    {% elif name == 'stats' %}
-    <path d="M4 20V10h4v10m2 0V4h4v16m2 0v-7h4v7M2 20h20"/>
-    {% elif name == 'settings' %}
-    <path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--paper)"/><circle cx="15" cy="17" r="3" fill="var(--paper)"/>
-    {% endif %}
-</svg>
-{%- endmacro %}
+{% import '_components.html' as ui with context %}
+{% set round_answered = data or session.get('answered', False) %}
 
-{% macro country_card(country, flag, choice, number) -%}
-<article class="country-card country-card--{{ number }}" aria-labelledby="country-{{ number }}">
-    <div class="country-card__top">
-        <span class="contender-label"><span class="contender-dot"></span>COUNTRY {{ number }}</span>
+{% macro contender(country, flag, choice, number, opponent) -%}
+{% set picked = data and request.form.get('guess') == choice %}
+{% set winner = data and data[country]['Points'] > data[opponent]['Points'] %}
+<article class="contender{% if winner %} contender--winner{% endif %}{% if picked %} contender--picked{% endif %}" aria-labelledby="country-{{ number }}">
+    <div class="contender-top">
+        <span class="eyebrow">Contender {{ number }}</span>
         {% if data %}
-        <span class="points-badge">{{ data[country]['Points'] }} {{ 'point' if data[country]['Points'] == 1 else 'points' }}</span>
+        <span class="round-standing">{% if winner %}Round winner{% elif data[country]['Points'] == data[opponent]['Points'] %}Draw{% else %}Runner-up{% endif %}</span>
         {% endif %}
     </div>
     <div class="country-identity">
-        <div class="flag-orbit" aria-hidden="true">
-            <span class="orbit-spark orbit-spark--one">✦</span>
-            <span class="country-flag">{{ flag }}</span>
-            <span class="orbit-spark orbit-spark--two">✧</span>
-        </div>
-        <h2 id="country-{{ number }}">{{ country }}</h2>
+        <span class="country-flag" role="img" aria-label="Flag of {{ country }}">{{ flag }}</span>
+        <h2 class="country-name{% if country|length > 24 %} country-name--long{% endif %}" id="country-{{ number }}">{{ country }}</h2>
     </div>
     <dl class="country-stats">
         <div class="country-stat">
-            <dt>{{ icon('users') }}Population</dt>
-            <dd>{% if data %}{{ '{:,}'.format(data[country]['Population']) }}{% else %}<span class="mystery-value" aria-label="Hidden until you guess">? ? ?</span>{% endif %}</dd>
+            <dt>Population</dt>
+            <dd>{% if data %}{{ '{:,}'.format(data[country]['Population']) }}{% else %}<span class="hidden-stat" aria-label="Hidden until you answer">—</span>{% endif %}</dd>
         </div>
         <div class="country-stat">
-            <dt>{{ icon('area') }}Area <span class="stat-unit">(km²)</span></dt>
-            <dd>{% if data %}{{ '{:,}'.format(data[country]['Area(km)']) }}{% else %}<span class="mystery-value" aria-label="Hidden until you guess">? ? ?</span>{% endif %}</dd>
+            <dt>Area <span class="stat-unit">/ km²</span></dt>
+            <dd>{% if data %}{{ '{:,}'.format(data[country]['Area(km)']) }}{% else %}<span class="hidden-stat" aria-label="Hidden until you answer">—</span>{% endif %}</dd>
         </div>
     </dl>
-    <button class="country-choice" type="submit" name="guess" value="{{ choice }}">
-        <span>{{ country }}</span>
+    {% if data %}
+    <div class="contender-score" aria-label="{{ country }}: {{ data[country]['Points'] }} {{ 'point' if data[country]['Points'] == 1 else 'points' }}">
+        <span class="score-number">{{ data[country]['Points'] }}</span>
+        <span class="score-label">{{ 'point' if data[country]['Points'] == 1 else 'points' }}</span>
+        {% if picked %}<span class="your-pick">{{ ui.icon('check') }} Your pick</span>{% endif %}
+    </div>
+    {% else %}
+    <button class="country-choice" type="submit" name="guess" value="{{ choice }}" aria-label="Choose {{ country }} to win">
+        <span>Choose {{ country }}</span>{{ ui.icon('arrow') }}
     </button>
+    {% endif %}
 </article>
 {%- endmacro %}
 
@@ -65,88 +44,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#faf9f2">
-    <meta name="description" content="Which country is bigger? Compare population and area and choose the winner.">
+    <meta name="theme-color" content="#f3f2ed">
+    <meta name="description" content="Two countries. One call. Compare population and area, choose the winner, and build your streak in Country Battle Royale.">
     <title>Country Battle Royale</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+    <link rel="preload" href="{{ url_for('static', filename='fonts/arena-condensed.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ url_for('static', filename='fonts/arena-sans.woff2') }}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="{{ url_for('static', filename='auth.js') }}" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#arena">Skip to the game</a>
-    <header class="site-header page-width">
-        <a class="brand" href="{{ url_for('index') }}" aria-label="Country Battle Royale home">
-            <span class="brand-mark">{{ icon('globe') }}</span>
-            <span class="brand-name">Country<br>Battle Royale<span class="brand-period">.</span></span>
-        </a>
-        {% set streak_level = 'blazing' if streak >= 10 else 'hot' if streak >= 5 else 'warm' if streak > 0 else 'idle' %}
-        <div class="streak-counter streak-counter--{{ streak_level }}" role="status" aria-live="polite" aria-atomic="true" aria-label="Current streak: {{ streak }} correct {{ 'guess' if streak == 1 else 'guesses' }} in a row">
-            <span class="streak-counter__flame" aria-hidden="true">
-                <svg class="streak-fire" width="44" height="52" viewBox="0 0 48 56" fill="none" focusable="false">
-                    <defs>
-                        <linearGradient id="streak-flame-gradient" x1="24" y1="5" x2="24" y2="52" gradientUnits="userSpaceOnUse">
-                            <stop class="streak-fire__tip"/>
-                            <stop class="streak-fire__base" offset="1"/>
-                        </linearGradient>
-                    </defs>
-                    <path class="streak-fire__outer" d="M27 4C30 16 16 19 17 29C12 27 10 23 10 20C3 29 4 40 12 47C19 54 31 54 38 46C46 37 42 26 35 20C36 26 33 30 29 31C33 20 33 12 27 4Z" fill="url(#streak-flame-gradient)" stroke-width="1.4" stroke-linejoin="round"/>
-                    <path class="streak-fire__core" d="M25 29C26 35 19 37 18 42C17 46 20 50 25 50C30 50 33 46 32 42C31 39 29 37 28 36C29 40 26 42 24 41C27 37 27 33 25 29Z"/>
-                </svg>
-                <span class="streak-counter__spark streak-counter__spark--one">✦</span>
-                <span class="streak-counter__spark streak-counter__spark--two">✧</span>
-            </span>
-            <span class="streak-counter__details" aria-hidden="true">
-                <span class="streak-counter__label">Win streak</span>
-                <span class="streak-counter__total"><span class="streak-counter__number">{{ streak }}</span><span class="streak-counter__unit">in a row</span></span>
-            </span>
-        </div>
-        {% set is_logged_in = logged|default(session.get('logged', False)) %}
-        <div class="auth-actions" id="guest-actions" {% if is_logged_in %}hidden{% endif %}>
-            <button class="auth-button" id="open-register" type="button" aria-haspopup="dialog" aria-controls="register-dialog">
-                {{ icon('users') }} Register
-            </button>
-            <button class="auth-button auth-button--login" id="open-login" type="button" aria-haspopup="dialog" aria-controls="login-dialog">
-                {{ icon('login') }} Login
-            </button>
-        </div>
-        <details class="account-menu" id="account-menu" {% if not is_logged_in %}hidden{% endif %}>
-            <summary class="auth-button account-toggle">
-                {{ icon('account') }} Account {{ icon('chevron', 'account-chevron') }}
-            </summary>
-            <div class="account-panel">
-                <div class="account-panel__heading">
-                    <span class="account-avatar">{{ icon('account') }}</span>
-                    <div><p class="account-panel__title">Your account</p><p class="account-panel__status">Signed in · Ready to play</p></div>
+    {{ ui.header() }}
+    <main class="page-width">
+        <section class="arena{% if data %} arena--answered{% endif %}" id="arena" aria-labelledby="page-title" tabindex="-1">
+            <div class="game-heading">
+                <div>
+                    <p class="eyebrow heading-eyebrow">The geography showdown</p>
+                    <h1 id="page-title">The world.<br><em>Head to head.</em></h1>
                 </div>
-                <p class="account-panel__hint" id="account-coming-soon">More account features coming soon.</p>
-                <div class="account-links" aria-label="Account options" aria-describedby="account-coming-soon">
-                    <button class="account-item" id="account-stats" type="button" disabled>
-                        {{ icon('stats') }} <span>Stats</span><span class="account-item__badge">Soon</span>
-                    </button>
-                    <button class="account-item" id="account-settings" type="button" disabled>
-                        {{ icon('settings') }} <span>Settings</span><span class="account-item__badge">Soon</span>
-                    </button>
-                    <form action="/logout" method="post">
-                        <button class="account-item account-item--logout" id="account-logout" type="submit">
-                            {{ icon('login') }} <span>Log out</span>
-                        </button>
-                    </form>
+                <div class="game-intro">
+                    <p class="game-question">Which country takes the round?</p>
+                    <p>One point for the larger population.<br> One point for the larger area.</p>
+                    <p class="game-instruction">Pick the winner. Equal points? Pick a draw.</p>
                 </div>
             </div>
-        </details>
-    </header>
-    <main class="page-width">
-        <section class="arena" id="arena" aria-labelledby="page-title" tabindex="-1">
-            <div class="game-heading">
-                <h1 id="page-title">Which country is bigger?</h1>
-                <p class="game-description">Population + area · 1 point for each larger stat.</p>
+            <div class="arena-bar">
+                <p class="eyebrow">{% if data %}The final score{% else %}Make your call{% endif %}</p>
+                <div class="streak-counter" role="status" aria-label="Current streak: {{ streak }} correct {{ 'guess' if streak == 1 else 'guesses' }} in a row">
+                    <span class="streak-label">Current streak</span><span class="streak-number">{{ streak }}</span>
+                </div>
             </div>
             {% if data %}
             <div class="result-message {{ 'result-message--correct' if is_correct else 'result-message--incorrect' }}" role="status">
-                <span class="result-icon">{{ icon('check' if is_correct else 'close') }}</span>
+                <span class="result-icon">{{ ui.icon('check' if is_correct else 'close') }}</span>
                 <div>
-                    <h2>{{ 'Correct!' if is_correct else 'Not quite.' }}</h2>
-                    <p>{% if data[country_1]['Points'] == data[country_2]['Points'] %}It's a draw — {{ data[country_1]['Points'] }} {{ 'point' if data[country_1]['Points'] == 1 else 'points' }} each.{% elif data[country_1]['Points'] > data[country_2]['Points'] %}{{ country_1 }} takes this round, {{ data[country_1]['Points'] }} to {{ data[country_2]['Points'] }}.{% else %}{{ country_2 }} takes this round, {{ data[country_2]['Points'] }} to {{ data[country_1]['Points'] }}.{% endif %}</p>
+                    <h2>{{ 'Correct call.' if is_correct else 'Incorrect call.' }}</h2>
+                    <p>{% if data[country_1]['Points'] == data[country_2]['Points'] %}A draw. {{ data[country_1]['Points'] }} {{ 'point' if data[country_1]['Points'] == 1 else 'points' }} each.{% elif data[country_1]['Points'] > data[country_2]['Points'] %}{{ country_1 }} wins, {{ data[country_1]['Points'] }}–{{ data[country_2]['Points'] }}.{% else %}{{ country_2 }} wins, {{ data[country_2]['Points'] }}–{{ data[country_1]['Points'] }}.{% endif %}{% if request.form.get('guess') == 'draw' %} You picked a draw.{% endif %}</p>
                 </div>
             </div>
             {% endif %}
@@ -154,75 +88,29 @@
                 <input type="hidden" name="country1" value="{{ country_1 }}">
                 <input type="hidden" name="country2" value="{{ country_2 }}">
                 <div class="matchup">
-                    {{ country_card(country_1, country_1_flag, 'country1', '01') }}
-                    <span class="versus" aria-label="versus">vs<span aria-hidden="true">.</span></span>
-                    {{ country_card(country_2, country_2_flag, 'country2', '02') }}
+                    {{ contender(country_1, country_1_flag, 'country1', '01', country_2) }}
+                    <span class="versus" aria-label="versus">VS</span>
+                    {{ contender(country_2, country_2_flag, 'country2', '02', country_1) }}
                 </div>
             </form>
-            <div class="round-actions">
-                <button class="round-action-button" type="submit" form="guess-form" name="guess" value="draw">{{ icon('equal') }} Call it a draw</button>
-                <form method="get" action="{{ url_for('index') }}">
-                    <button class="round-action-button round-action-button--new" type="submit">{{ icon('shuffle') }} New matchup</button>
+            <div class="round-footer{% if round_answered %} round-footer--answered{% endif %}">
+                {% if not round_answered %}
+                <div class="draw-choice">
+                    <button class="draw-button" type="submit" form="guess-form" name="guess" value="draw">{{ ui.icon('equal') }} Pick a draw</button>
+                    <span class="draw-hint">Think they split the points?</span>
+                </div>
+                {% else %}
+                <form class="new-matchup-form" method="get" action="{{ url_for('index') }}">
+                    <button class="new-matchup-button new-matchup-button--next" type="submit">{{ ui.icon('shuffle') }} New matchup {{ ui.icon('arrow') }}</button>
                 </form>
+                {% endif %}
             </div>
+            {% if not data %}<p class="reveal-note">The numbers stay hidden until you answer.</p>{% endif %}
         </section>
     </main>
-    {% set registration_errors = registration_errors|default({}, true) %}
-    {% set registration_values = registration_values|default({}, true) %}
-    <dialog class="auth-dialog" id="register-dialog" aria-labelledby="register-title" aria-describedby="register-description">
-        <button class="auth-close" type="button" data-close-auth aria-label="Close registration">{{ icon('close') }}</button>
-        <span class="auth-mark" aria-hidden="true">{{ icon('globe') }}</span>
-        <h2 id="register-title">Join the battle<span class="brand-period">.</span></h2>
-        <p class="auth-intro" id="register-description">Your next matchup is waiting.</p>
-        <form id="register-form" class="auth-form" method="post" action="/register">
-            <p class="auth-error auth-error--summary" id="register-form-error" role="alert" tabindex="-1" {% if not registration_errors.get('form') %}hidden{% endif %}>{{ registration_errors.get('form', '') }}</p>
-            <div class="auth-field">
-                <label for="register-username">Username</label>
-                <input id="register-username" name="username" type="text" autocomplete="username" placeholder="Choose your player name" value="{{ registration_values.get('username', '') }}" aria-describedby="register-username-error" {% if registration_errors.get('username') %}aria-invalid="true"{% endif %} required autofocus>
-                <p class="auth-error" id="register-username-error" role="alert" {% if not registration_errors.get('username') %}hidden{% endif %}>{{ registration_errors.get('username', '') }}</p>
-            </div>
-            <div class="auth-field">
-                <label for="register-email">Email</label>
-                <input id="register-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" value="{{ registration_values.get('email', '') }}" aria-describedby="register-email-error" {% if registration_errors.get('email') %}aria-invalid="true"{% endif %} required>
-                <p class="auth-error" id="register-email-error" role="alert" {% if not registration_errors.get('email') %}hidden{% endif %}>{{ registration_errors.get('email', '') }}</p>
-            </div>
-            <div class="auth-field">
-                <label for="register-password">Password</label>
-                <div class="auth-password">
-                    <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" aria-describedby="register-password-hint" placeholder="Create a password" required>
-                    <button class="auth-password-toggle" id="toggle-register-password" type="button" aria-controls="register-password" aria-label="Show password" aria-pressed="false">Show</button>
-                </div>
-                <p class="auth-hint" id="register-password-hint">Use at least 8 characters.</p>
-            </div>
-            <button class="auth-submit" type="submit">Create account</button>
-        </form>
-        <div class="auth-success" id="register-success" role="status" tabindex="-1" hidden>
-            <h3>{{ icon('check') }} Account created!</h3>
-            <p id="register-success-message"></p>
-        </div>
-        <button class="auth-guest" type="button" data-close-auth>Keep playing as a guest</button>
-    </dialog>
-    <dialog class="auth-dialog auth-dialog--login" id="login-dialog" aria-labelledby="login-title" aria-describedby="login-description">
-        <button class="auth-close" type="button" data-close-auth aria-label="Close login">{{ icon('close') }}</button>
-        <span class="auth-mark" aria-hidden="true">{{ icon('login') }}</span>
-        <h2 id="login-title">Welcome back<span class="brand-period">.</span></h2>
-        <p class="auth-intro" id="login-description">Ready for another matchup?</p>
-        <form id="login-form" class="auth-form" method="post" action="/login">
-            <p class="auth-error auth-error--summary" id="login-form-error" role="alert" tabindex="-1" hidden></p>
-            <div class="auth-field">
-                <label for="login-username">Username</label>
-                <input id="login-username" name="username" type="text" autocomplete="username" placeholder="Your player name" required autofocus>
-            </div>
-            <div class="auth-field">
-                <label for="login-password">Password</label>
-                <div class="auth-password">
-                    <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Your password" required>
-                    <button class="auth-password-toggle" id="toggle-login-password" type="button" aria-controls="login-password" aria-label="Show password" aria-pressed="false">Show</button>
-                </div>
-            </div>
-            <button class="auth-submit auth-submit--login" type="submit">Log in</button>
-        </form>
-        <button class="auth-guest" type="button" data-close-auth>Keep playing as a guest</button>
-    </dialog>
+    <footer class="site-footer page-width">
+        <span>Country Battle Royale</span><span>A game of scale &amp; instinct.</span>
+    </footer>
+    {% include '_auth-dialogs.html' %}
 </body>
 </html>

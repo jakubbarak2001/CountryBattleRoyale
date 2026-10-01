@@ -2,14 +2,17 @@
 
 A small Flask game where you guess which of two random countries wins on population and area. Built with Python, Jinja2, HTML, CSS, and JavaScript, using the REST Countries API.
 
-![Country Battle Royale — Philippines vs. Kuwait](docs/images/gameplay.png)
+Light paper surfaces, charcoal typography, and vermilion accents frame the matchup. Large country names and flags give both contenders equal weight, with a side-by-side arena on desktop and a stacked layout on mobile.
+
+![Country Battle Royale — redesigned Japan vs. Brazil matchup](docs/images/gameplay.png)
 
 ## How to play
 
 - Larger population earns **1 point**; larger area earns **1 point**.
-- Pick the country with the higher score, or **Call it a draw** if the scores match.
+- Pick the country with the higher score, or **Pick a draw** if the scores match.
+- Population and area stay hidden until you answer. Your guess reveals the statistics, points, and round result.
 - Correct guesses build your win streak. An incorrect guess resets it.
-- After answering, choose **New matchup** to play another round.
+- **New matchup** appears after you answer. Choose it to play another round.
 
 ## Run locally
 
@@ -42,7 +45,7 @@ Open [localhost:5000](http://127.0.0.1:5000). Country data is cached for seven d
 
 ## Account features
 
-Registration works with PostgreSQL, Argon2 password hashing, and inline errors for duplicate usernames or emails. Requires `DATABASE_URL` and a configured `users` table. Login is not implemented yet.
+Registration and login use PostgreSQL and Argon2 password hashing. Both dialogs include password visibility controls and clear error messages; registration shows inline errors for duplicate usernames or emails. Once signed in, use the **Account** menu to log out. Requires `DATABASE_URL` and a configured `users` table.
 
 ## Tests
 
@@ -52,4 +55,4 @@ python -m unittest tests -v
 
 The test uses the game's country cache and needs API access if the cache is missing or expired.
 
-[MIT license](LICENSE) · [Font license](static/fonts/OFL.txt)
+[MIT license](LICENSE) · [Font license](static/fonts/arena-OFL.txt)
