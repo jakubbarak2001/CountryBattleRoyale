@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 from werkzeug.utils import redirect
 
-from backend.db import create_user, login_user
+from backend.db import create_user, login_user, read_rounds_played
 from countries import compare_two_countries, select_and_compare_random_countries
 
 load_dotenv()
@@ -144,11 +144,13 @@ def logout():
     return render_template("index.html", **get_game_context())
 
 
-def render_account(section: str = "account"):
+def render_account(section: str = "account", rounds_played=None):
 
     if session.get("logged", False) and session.get("username"):
         return render_template("account.html",
-                               name = session["username"], section = section)
+                               name = session["username"],
+                               section=section,
+                               rounds_played=rounds_played)
 
     else:
         return redirect("/")
@@ -160,7 +162,11 @@ def account():
 
 @app.route("/account/stats", methods=["GET"])
 def stats():
-    return render_account("stats")
+    if session.get("logged", False) and session.get("username"):
+        rounds = read_rounds_played(session["username"])
+        return render_account("stats", rounds_played=rounds)
+    else:
+        return redirect("/")
 
 
 @app.route("/account/achievements", methods=["GET"])

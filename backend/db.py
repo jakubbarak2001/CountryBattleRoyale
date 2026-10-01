@@ -59,3 +59,18 @@ def write_login_timestamp(user_id):
             cur.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP where id = %s",
                         (user_id,),
                         )
+
+def read_rounds_played(entered_username):
+    with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT rounds_played FROM users WHERE username = %s",
+                        (entered_username,))
+
+            row = cur.fetchone()
+
+            if row is None:
+                return None
+
+            rounds_played =  row[0]
+
+            return rounds_played

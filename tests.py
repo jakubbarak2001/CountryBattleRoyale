@@ -139,6 +139,7 @@ class AuthenticationTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.location, "/")
 
+    @patch("backend.app.read_rounds_played", return_value=0)
     def test_logged_account_stats(self):
         client = app.test_client()
 
@@ -176,4 +177,4 @@ class AuthenticationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("user", response.get_data(as_text=True))
-        self.assertIn("settings", response.get_data(as_text=True))
+        self.assertIn("Your settings", response.get_data(as_text=True))
