@@ -12,8 +12,8 @@ api_key = os.getenv("MY_SECRET_KEY")
 
 #CORE GAME LOGIC
 def get_one_country(country):
-    if not os.path.exists("countries.json") or check_cache_age():
-        cache_data()
+    if not os.path.exists("countries.json") or is_country_cache_expired():
+        refresh_country_cache()
 
     with open("countries.json", "r", encoding="utf-8") as file:
         data = json.load(file)
@@ -34,33 +34,33 @@ def get_country_data(country1, country2):
 
 
 def compare_two_countries(country1, country2):
-    countries_api_data = get_country_data(country1, country2)
+    country_details = get_country_data(country1, country2)
 
     stats = {
-        countries_api_data[0]["Name"]: {"Points": 0,
-                                        "Population": countries_api_data[0]["Population"],
-                                        "Area(km)": countries_api_data[0]["Area(km)"],
-                                        "Flag": countries_api_data[0]["Flag"]},
-        countries_api_data[1]["Name"]: {"Points": 0,
-                                        "Population": countries_api_data[1]["Population"],
-                                        "Area(km)": countries_api_data[1]["Area(km)"],
-                                        "Flag": countries_api_data[1]["Flag"]}
+        country_details[0]["Name"]: {"Points": 0,
+                                        "Population": country_details[0]["Population"],
+                                        "Area(km)": country_details[0]["Area(km)"],
+                                        "Flag": country_details[0]["Flag"]},
+        country_details[1]["Name"]: {"Points": 0,
+                                        "Population": country_details[1]["Population"],
+                                        "Area(km)": country_details[1]["Area(km)"],
+                                        "Flag": country_details[1]["Flag"]}
     }
 
-    if countries_api_data[0]["Population"] > countries_api_data[1]["Population"]:
-        stats[countries_api_data[0]["Name"]]["Points"] += 1
-    elif countries_api_data[1]["Population"] > countries_api_data[0]["Population"]:
-        stats[countries_api_data[1]["Name"]]["Points"] += 1
-    if countries_api_data[0]["Area(km)"] > countries_api_data[1]["Area(km)"]:
-        stats[countries_api_data[0]["Name"]]["Points"] += 1
-    elif countries_api_data[1]["Area(km)"] > countries_api_data[0]["Area(km)"]:
-        stats[countries_api_data[1]["Name"]]["Points"] += 1
+    if country_details[0]["Population"] > country_details[1]["Population"]:
+        stats[country_details[0]["Name"]]["Points"] += 1
+    elif country_details[1]["Population"] > country_details[0]["Population"]:
+        stats[country_details[1]["Name"]]["Points"] += 1
+    if country_details[0]["Area(km)"] > country_details[1]["Area(km)"]:
+        stats[country_details[0]["Name"]]["Points"] += 1
+    elif country_details[1]["Area(km)"] > country_details[0]["Area(km)"]:
+        stats[country_details[1]["Name"]]["Points"] += 1
     return stats
 
 
 def select_and_compare_random_countries():
-    if not os.path.exists("countries.json") or check_cache_age():
-        cache_data()
+    if not os.path.exists("countries.json") or is_country_cache_expired():
+        refresh_country_cache()
 
     with open("countries.json", "r", encoding="UTF-8") as file:
         country_data = json.load(file)
@@ -74,7 +74,7 @@ def select_and_compare_random_countries():
 
     return compare_two_countries(country1, country2)
 
-def cache_data():
+def refresh_country_cache():
     response1 = requests.get(
         "https://api.restcountries.com/countries/v5?limit=100",
         headers={"Authorization": f"Bearer {api_key}"},
@@ -104,7 +104,7 @@ def cache_data():
         json.dump(countries_timestamp, file, indent=2)
 
 
-def check_cache_age():
+def is_country_cache_expired():
     with open("countries.json", "r") as file:
         old = False
         data = json.load(file)

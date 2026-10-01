@@ -16,13 +16,13 @@ app.config["SECRET_KEY"] = os.environ["FLASK_SECRET_KEY"]
 
 def get_game_context():
     country_1, country_2 = session["current_countries"]
-    random_countries = compare_two_countries(country_1, country_2)
+    country_comparison = compare_two_countries(country_1, country_2)
 
     return {
         "country_1": country_1,
         "country_2": country_2,
-        "country_1_flag": random_countries[country_1]["Flag"],
-        "country_2_flag": random_countries[country_2]["Flag"],
+        "country_1_flag": country_comparison[country_1]["Flag"],
+        "country_2_flag": country_comparison[country_2]["Flag"],
         "streak": session.get("streak", 0),
         "data": None,
     }
@@ -31,13 +31,14 @@ def get_game_context():
 def index():
 
     if request.method == "GET":
+        session.permanent = True
 
         if session.get("logged", False):
             print("Logged")
 
         if "current_countries" not in session or session.get("answered", False):
-            random_countries = select_and_compare_random_countries()
-            session["current_countries"] = list(random_countries.keys())
+            country_comparison = select_and_compare_random_countries()
+            session["current_countries"] = list(country_comparison.keys())
             session["answered"] = False
 
         return render_template(
@@ -50,17 +51,17 @@ def index():
         country_2 = request.form["country2"]
         guess = request.form["guess"]
 
-        battle_data = compare_two_countries(country_1, country_2)
+        country_comparison = compare_two_countries(country_1, country_2)
 
         is_correct = False
         if guess == "country1":
-            if battle_data[country_1]["Points"] > battle_data[country_2]["Points"]:
+            if country_comparison[country_1]["Points"] > country_comparison[country_2]["Points"]:
                 is_correct = True
         if guess == "country2":
-            if battle_data[country_2]["Points"] > battle_data[country_1]["Points"]:
+            if country_comparison[country_2]["Points"] > country_comparison[country_1]["Points"]:
                 is_correct = True
         if guess == "draw":
-            if battle_data[country_1]["Points"] == battle_data[country_2]["Points"]:
+            if country_comparison[country_1]["Points"] == country_comparison[country_2]["Points"]:
                 is_correct = True
 
 
@@ -75,13 +76,13 @@ def index():
 
         return render_template(
             "index.html",
-            data=battle_data,
+            data=country_comparison,
             is_correct=is_correct,
             streak=session.get("streak", 0),
             country_1=country_1,
             country_2=country_2,
-            country_1_flag=battle_data[country_1]["Flag"],
-            country_2_flag=battle_data[country_2]["Flag"]
+            country_1_flag=country_comparison[country_1]["Flag"],
+            country_2_flag=country_comparison[country_2]["Flag"]
         )
 
 @app.route("/register", methods=["POST"])
