@@ -1,33 +1,94 @@
 {% import '_components.html' as ui with context %}
+{% set current_section = section|default(request.endpoint, true) %}
+{% if current_section not in ['account', 'stats', 'achievements', 'settings'] %}
+    {% set current_section = 'account' %}
+{% endif %}
+{% set titles = {'account': 'Your account', 'stats': 'Your stats', 'achievements': 'Your achievements', 'settings': 'Your settings'} %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f3f2ed">
-    <title>Your account | Country Battle Royale</title>
+    <title>{{ titles[current_section] }} | Country Battle Royale</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
     <link rel="preload" href="{{ url_for('static', filename='fonts/arena-condensed.woff2') }}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="{{ url_for('static', filename='auth.js') }}" defer></script>
 </head>
-<body>
-    <a class="skip-link" href="#account">Skip to your account</a>
+<body class="account-page">
+    <a class="skip-link" href="#account-content">Skip to account content</a>
     {{ ui.header() }}
-    <main class="success-main page-width">
-        <section class="success-composition" id="account" aria-labelledby="account-title" tabindex="-1">
-            <div class="success-content">
-                <span class="success-mark" aria-hidden="true">{{ ui.icon('account') }}</span>
-                <p class="eyebrow">Player account</p>
-                <h1 id="account-title">Your account,<br><em>{{ name }}.</em></h1>
-                <p class="success-description">You're signed in and ready for your next matchup.</p>
-                <a class="auth-submit success-link" href="{{ url_for('index') }}">Back to the game {{ ui.icon('arrow') }}</a>
+    <main class="account-main page-width">
+        <header class="account-heading">
+            <div>
+                <p class="eyebrow">Player account / {{ current_section }}</p>
+                <h1>{{ titles[current_section] }}<span class="brand-period">.</span></h1>
+                <p class="account-player">Signed in as <strong>{{ name }}</strong></p>
             </div>
-            <div class="success-aside" aria-hidden="true">
-                {{ ui.icon('globe', 'success-globe') }}
-                <p>Know<br>the world.<br><span>Make<br>your call.</span></p>
-            </div>
-        </section>
+            <a class="auth-button account-back" href="{{ url_for('index') }}">Back to the game {{ ui.icon('arrow') }}</a>
+        </header>
+        <div class="account-layout">
+            {{ ui.account_navigation(current_section) }}
+            <section class="account-content" id="account-content" aria-labelledby="section-title" tabindex="-1">
+                {% if current_section == 'account' %}
+                <div class="account-section-heading">
+                    <p class="eyebrow">Your corner of the arena</p>
+                    <h2 id="section-title">Welcome back, <em>{{ name }}.</em></h2>
+                    <p>Your game is waiting. Explore what's coming to your account below.</p>
+                </div>
+                <div class="account-destinations">
+                    {% for key, label, description in [
+                        ('stats', 'Stats', 'A place for your rounds, wins, and best streaks.'),
+                        ('achievements', 'Achievements', 'A place for the milestones you reach along the way.'),
+                        ('settings', 'Settings', 'A place to manage your account and game preferences.')
+                    ] %}
+                    <a class="account-destination" href="{{ url_for('account') }}/{{ key }}">
+                        {{ ui.icon(key, 'account-destination-icon') }}
+                        <div><h3>{{ label }}</h3><p>{{ description }}</p><span class="account-coming-soon">Coming soon</span></div>
+                        {{ ui.icon('arrow') }}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% elif current_section == 'stats' %}
+                <div class="account-section-heading">
+                    <p class="eyebrow">Your record</p>
+                    <h2 id="section-title">Every round counts<span class="brand-period">.</span></h2>
+                    <p>Your performance will have a home here. Stats aren't available yet.</p>
+                </div>
+                <dl class="account-stat-grid">
+                    {% for label in ['Rounds played', 'Rounds won', 'Best streak'] %}
+                    <div class="account-stat"><dt>{{ label }}</dt><dd><span aria-hidden="true">&mdash;</span><span class="account-coming-soon">Coming soon</span></dd></div>
+                    {% endfor %}
+                </dl>
+                <p class="account-footnote">No stats to display yet.</p>
+                {% elif current_section == 'achievements' %}
+                <div class="account-section-heading">
+                    <p class="eyebrow">Your milestones</p>
+                    <h2 id="section-title">Make your mark<span class="brand-period">.</span></h2>
+                    <p>A place for your future achievements.</p>
+                </div>
+                <div class="account-placeholder">
+                    <span class="account-placeholder-icon">{{ ui.icon('achievements') }}</span>
+                    <span class="account-coming-soon">Coming soon</span>
+                    <h3>The collection starts here.</h3>
+                    <p>Achievements are on the way. Check back for milestones to work toward.</p>
+                </div>
+                {% elif current_section == 'settings' %}
+                <div class="account-section-heading">
+                    <p class="eyebrow">Your preferences</p>
+                    <h2 id="section-title">Make it yours<span class="brand-period">.</span></h2>
+                    <p>Your account and game preferences will live here.</p>
+                </div>
+                <div class="account-placeholder">
+                    <span class="account-placeholder-icon">{{ ui.icon('settings') }}</span>
+                    <span class="account-coming-soon">Coming soon</span>
+                    <h3>Settings are on the way.</h3>
+                    <p>There are no settings to change yet. For now, you're ready to play.</p>
+                </div>
+                {% endif %}
+            </section>
+        </div>
     </main>
     <footer class="site-footer page-width"><span>Country Battle Royale</span><span>A game of scale &amp; instinct.</span></footer>
     {% include '_auth-dialogs.html' %}
