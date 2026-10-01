@@ -1,0 +1,60 @@
+{% set registration_errors = registration_errors|default({}, true) %}
+{% set registration_values = registration_values|default({}, true) %}
+<dialog class="auth-dialog" id="register-dialog" aria-labelledby="register-title" aria-describedby="register-description">
+    <button class="auth-close" type="button" data-close-auth aria-label="Close registration">{{ ui.icon('close') }}</button>
+    <p class="eyebrow auth-eyebrow">Country Battle Royale / Register</p>
+    <h2 id="register-title">Take your place<span class="brand-period">.</span></h2>
+    <p class="auth-intro" id="register-description">Create your account. Get back to the showdown.</p>
+    <form id="register-form" class="auth-form" method="post" action="/register">
+        <p class="auth-error auth-error--summary" id="register-form-error" role="alert" tabindex="-1" {% if not registration_errors.get('form') %}hidden{% endif %}>{{ registration_errors.get('form', '') }}</p>
+        <div class="auth-field">
+            <label for="register-username">Username</label>
+            <input id="register-username" name="username" type="text" autocomplete="username" placeholder="Choose a username" value="{{ registration_values.get('username', '') }}" aria-describedby="register-username-error" {% if registration_errors.get('username') %}aria-invalid="true"{% endif %} required autofocus>
+            <p class="auth-error" id="register-username-error" role="alert" {% if not registration_errors.get('username') %}hidden{% endif %}>{{ registration_errors.get('username', '') }}</p>
+        </div>
+        <div class="auth-field">
+            <label for="register-email">Email</label>
+            <input id="register-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" value="{{ registration_values.get('email', '') }}" aria-describedby="register-email-error" {% if registration_errors.get('email') %}aria-invalid="true"{% endif %} required>
+            <p class="auth-error" id="register-email-error" role="alert" {% if not registration_errors.get('email') %}hidden{% endif %}>{{ registration_errors.get('email', '') }}</p>
+        </div>
+        <div class="auth-field">
+            <label for="register-password">Password</label>
+            <div class="auth-password">
+                <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" aria-describedby="register-password-hint" placeholder="At least 8 characters" required>
+                <button class="auth-password-toggle" id="toggle-register-password" type="button" aria-controls="register-password" aria-label="Show password" aria-pressed="false">Show</button>
+            </div>
+            <p class="auth-hint" id="register-password-hint">Use at least 8 characters.</p>
+        </div>
+        <button class="auth-submit" type="submit">Create account</button>
+    </form>
+    <div class="auth-success" id="register-success" role="status" tabindex="-1" hidden>
+        <h3>{{ ui.icon('check') }} Account created.</h3>
+        <p id="register-success-message"></p>
+    </div>
+    <p class="auth-switch">Already have an account? <button type="button" data-auth-switch="login">Log in</button></p>
+    <button class="auth-guest" type="button" data-close-auth>Keep playing as a guest</button>
+</dialog>
+
+<dialog class="auth-dialog" id="login-dialog" aria-labelledby="login-title" aria-describedby="login-description">
+    <button class="auth-close" type="button" data-close-auth aria-label="Close login">{{ ui.icon('close') }}</button>
+    <p class="eyebrow auth-eyebrow">Country Battle Royale / Log in</p>
+    <h2 id="login-title">Back in the arena<span class="brand-period">.</span></h2>
+    <p class="auth-intro" id="login-description">Your next matchup is waiting.</p>
+    <form id="login-form" class="auth-form" method="post" action="/login">
+        <p class="auth-error auth-error--summary" id="login-form-error" role="alert" tabindex="-1" hidden></p>
+        <div class="auth-field">
+            <label for="login-username">Username</label>
+            <input id="login-username" name="username" type="text" autocomplete="username" placeholder="Your username" required autofocus>
+        </div>
+        <div class="auth-field">
+            <label for="login-password">Password</label>
+            <div class="auth-password">
+                <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Your password" required>
+                <button class="auth-password-toggle" id="toggle-login-password" type="button" aria-controls="login-password" aria-label="Show password" aria-pressed="false">Show</button>
+            </div>
+        </div>
+        <button class="auth-submit" type="submit">Log in</button>
+    </form>
+    <p class="auth-switch">New to the battle? <button type="button" data-auth-switch="register">Create an account</button></p>
+    <button class="auth-guest" type="button" data-close-auth>Keep playing as a guest</button>
+</dialog>

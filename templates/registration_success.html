@@ -1,36 +1,35 @@
+{% import '_components.html' as ui with context %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#faf9f2">
+    <meta name="theme-color" content="#f3f2ed">
     <title>Registration complete | Country Battle Royale</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+    <link rel="preload" href="{{ url_for('static', filename='fonts/arena-condensed.woff2') }}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='auth.js') }}" defer></script>
 </head>
 <body class="success-page">
     <a class="skip-link" href="#registration-success">Skip to confirmation</a>
-    <header class="site-header page-width">
-        <a class="brand" href="{{ url_for('index') }}" aria-label="Country Battle Royale home">
-            <span class="brand-mark">
-                <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6.5a16 16 0 0 0 14 0M5 17.5a16 16 0 0 1 14 0"/>
-                </svg>
-            </span>
-            <span class="brand-name">Country<br>Battle Royale<span class="brand-period">.</span></span>
-        </a>
-    </header>
+    {{ ui.header() }}
     <main class="success-main page-width">
-        <section class="success-card" id="registration-success" aria-labelledby="success-title" tabindex="-1">
-            <div class="success-mark" aria-hidden="true">
-                <svg class="icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m5 12 4 4L19 6"/>
-                </svg>
+        <section class="success-composition" id="registration-success" aria-labelledby="success-title" tabindex="-1">
+            <div class="success-content">
+                <span class="success-mark" aria-hidden="true">{{ ui.icon('check') }}</span>
+                <p class="eyebrow">Account confirmed</p>
+                <h1 id="success-title">You're in.<br><em>Hello, {{ name }}.</em></h1>
+                <p class="success-description">Your account has been created.<br>The next matchup awaits.</p>
+                <a class="auth-submit success-link" href="{{ url_for('index') }}">Back to the game {{ ui.icon('arrow') }}</a>
             </div>
-            <h1 id="success-title">Hello, {{ name }}<span class="brand-period">!</span></h1>
-            <p>Your account has been created. Let the country battles begin.</p>
-            <a class="auth-button success-link" href="{{ url_for('index') }}">Back to game</a>
+            <div class="success-aside" aria-hidden="true">
+                {{ ui.icon('globe', 'success-globe') }}
+                <p>Know<br>the world.<br><span>Make<br>your call.</span></p>
+            </div>
         </section>
     </main>
+    <footer class="site-footer page-width"><span>Country Battle Royale</span><span>A game of scale &amp; instinct.</span></footer>
+    {% include '_auth-dialogs.html' %}
 </body>
 </html>

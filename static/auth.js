@@ -12,6 +12,13 @@ function setupAuthDialog(name) {
         button.addEventListener("click", () => dialog.close());
     });
 
+    dialog.querySelectorAll("[data-auth-switch]").forEach((button) => {
+        button.addEventListener("click", () => {
+            dialog.close();
+            document.querySelector(`#${button.dataset.authSwitch}-dialog`).showModal();
+        });
+    });
+
     dialog.addEventListener("click", (event) => {
         if (event.target !== dialog) return;
 
@@ -62,10 +69,13 @@ document.addEventListener("focusin", (event) => {
     if (!accountMenu.contains(event.target)) accountMenu.open = false;
 });
 
-function showLoggedInAccount() {
+function showLoggedInAccount(name) {
     // The server confirms login; this only updates the visible header.
     document.querySelector("#guest-actions").hidden = true;
     accountMenu.hidden = false;
+    if (typeof name === "string" && name.trim()) {
+        document.querySelector("#account-name").textContent = name;
+    }
 }
 
 function setupRegistration() {
@@ -91,10 +101,6 @@ function setupRegistration() {
     }
 
     function highlightErrors() {
-        // Restart the animation even if another error arrives during the shake.
-        dialog.classList.remove("auth-dialog--error");
-        void dialog.offsetWidth;
-        dialog.classList.add("auth-dialog--error");
         const focusTarget = form.querySelector('[aria-invalid="true"]') || summary;
         focusTarget.focus();
     }
@@ -152,7 +158,7 @@ function setupRegistration() {
 
         // Update the header even if registration finished after closing the dialog.
         if (response?.ok && result?.success === true && result?.logged === true) {
-            showLoggedInAccount();
+            showLoggedInAccount(result.name);
             window.location.assign("/registration_success");
             if (!dialog.open) accountToggle.focus();
         }
@@ -165,8 +171,8 @@ function setupRegistration() {
             document.querySelector("#register-password").value = "";
             form.hidden = true;
             successMessage.textContent = typeof result.name === "string" && result.name.trim()
-                ? `Welcome, ${result.name}! Your account has been created.`
-                : "Your account has been created. Let the country battles begin.";
+                ? `Your account is ready, ${result.name}.`
+                : "Your account has been created. The next matchup awaits.";
             success.hidden = false;
             guest.textContent = "Back to game";
             success.focus();
@@ -196,14 +202,7 @@ function setupRegistration() {
         success.hidden = true;
         successMessage.textContent = "";
         guest.textContent = "Keep playing as a guest";
-        dialog.classList.remove("auth-dialog--error");
         if (!accountMenu.hidden) accountToggle.focus();
-    });
-
-    dialog.addEventListener("animationend", (event) => {
-        if (event.target === dialog && event.animationName === "auth-shake") {
-            dialog.classList.remove("auth-dialog--error");
-        }
     });
 
     if (form.querySelector(".auth-error:not([hidden])")) {
@@ -226,7 +225,6 @@ function setupLogin() {
     function clearError() {
         summary.hidden = true;
         summary.textContent = "";
-        dialog.classList.remove("auth-dialog--error");
     }
 
     form.addEventListener("submit", async (event) => {
@@ -242,11 +240,19 @@ function setupLogin() {
         submit.textContent = "Logging in…";
 
         let response;
+        let accountName;
+        let confirmedLogin = false;
         let message = "We couldn't log you in. Please try again.";
         try {
             response = await fetch(form.action, { method: "POST", body });
             // Login currently returns HTML on success and JSON on failure.
-            if (!response.ok) {
+            if (response.ok) {
+                const html = await response.text();
+                const responsePage = new DOMParser().parseFromString(html, "text/html");
+                const confirmedAccount = responsePage.querySelector("#account-menu:not([hidden])");
+                confirmedLogin = Boolean(confirmedAccount);
+                accountName = confirmedAccount?.querySelector("#account-name")?.textContent;
+            } else {
                 const result = await response.json();
                 if (response.status === 401 && typeof result.errors === "string" && result.errors.trim()) {
                     message = result.errors;
@@ -261,8 +267,8 @@ function setupLogin() {
             submit.textContent = "Log in";
         }
 
-        if (response?.ok) {
-            showLoggedInAccount();
+        if (confirmedLogin) {
+            showLoggedInAccount(accountName);
             if (version === dialogVersion && dialog.open) dialog.close();
             if (!dialog.open) accountToggle.focus();
             return;
@@ -271,8 +277,6 @@ function setupLogin() {
         if (version !== dialogVersion || !dialog.open) return;
         summary.textContent = message;
         summary.hidden = false;
-        void dialog.offsetWidth;
-        dialog.classList.add("auth-dialog--error");
         summary.focus();
     });
 
@@ -280,11 +284,6 @@ function setupLogin() {
     dialog.addEventListener("close", () => {
         dialogVersion += 1;
         clearError();
-    });
-    dialog.addEventListener("animationend", (event) => {
-        if (event.target === dialog && event.animationName === "auth-shake") {
-            dialog.classList.remove("auth-dialog--error");
-        }
     });
 }
 
