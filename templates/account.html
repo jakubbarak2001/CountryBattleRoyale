@@ -35,17 +35,17 @@
                 <div class="account-section-heading">
                     <p class="eyebrow">Your corner of the arena</p>
                     <h2 id="section-title">Welcome back, <em>{{ name }}.</em></h2>
-                    <p>Your game is waiting. Explore what's coming to your account below.</p>
+                    <p>Your game is waiting. Explore your account and what's coming next.</p>
                 </div>
                 <div class="account-destinations">
                     {% for key, label, description in [
-                        ('stats', 'Stats', 'A place for your rounds, wins, and best streaks.'),
+                        ('stats', 'Stats', 'Your completed rounds, with more stats on the way.'),
                         ('achievements', 'Achievements', 'A place for the milestones you reach along the way.'),
                         ('settings', 'Settings', 'A place to manage your account and game preferences.')
                     ] %}
                     <a class="account-destination" href="{{ url_for('account') }}/{{ key }}">
                         {{ ui.icon(key, 'account-destination-icon') }}
-                        <div><h3>{{ label }}</h3><p>{{ description }}</p><span class="account-coming-soon">Coming soon</span></div>
+                        <div><h3>{{ label }}</h3><p>{{ description }}</p>{% if key != 'stats' %}<span class="account-coming-soon">Coming soon</span>{% endif %}</div>
                         {{ ui.icon('arrow') }}
                     </a>
                     {% endfor %}
@@ -54,14 +54,20 @@
                 <div class="account-section-heading">
                     <p class="eyebrow">Your record</p>
                     <h2 id="section-title">Every round counts<span class="brand-period">.</span></h2>
-                    <p>Your performance will have a home here. Stats aren't available yet.</p>
+                    <p>Your completed rounds, at a glance. Wins and streak stats are coming soon.</p>
                 </div>
                 <dl class="account-stat-grid">
-                    {% for label in ['Rounds played', 'Rounds won', 'Best streak'] %}
+                    <div class="account-stat">
+                        <dt>Rounds played</dt>
+                        <dd>{% if rounds_played is defined and rounds_played is not none %}{{ '{:,}'.format(rounds_played) }}{% else %}<span aria-hidden="true">&mdash;</span><span class="account-coming-soon">Unavailable</span>{% endif %}</dd>
+                    </div>
+                    {% for label in ['Rounds won', 'Best streak'] %}
                     <div class="account-stat"><dt>{{ label }}</dt><dd><span aria-hidden="true">&mdash;</span><span class="account-coming-soon">Coming soon</span></dd></div>
                     {% endfor %}
                 </dl>
-                <p class="account-footnote">No stats to display yet.</p>
+                {% if rounds_played is not defined or rounds_played is none %}
+                <p class="account-footnote">Rounds played couldn't be loaded. Try again later.</p>
+                {% endif %}
                 {% elif current_section == 'achievements' %}
                 <div class="account-section-heading">
                     <p class="eyebrow">Your milestones</p>
