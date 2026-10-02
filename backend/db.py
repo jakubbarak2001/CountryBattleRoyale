@@ -74,3 +74,10 @@ def read_rounds_played(entered_username):
             rounds_played =  row[0]
 
             return rounds_played
+
+
+def write_rounds_played(entered_username):
+    with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET rounds_played = rounds_played + 1 WHERE username = %s",
+                        (entered_username,))

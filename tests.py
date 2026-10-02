@@ -5,6 +5,7 @@ from unittest.mock import patch
 from psycopg.errors import UniqueViolation
 from requests import session
 
+import backend.app
 from backend.app import app
 from countries import compare_two_countries
 
@@ -140,7 +141,7 @@ class AuthenticationTests(TestCase):
         self.assertEqual(response.location, "/")
 
     @patch("backend.app.read_rounds_played", return_value=0)
-    def test_logged_account_stats(self):
+    def test_logged_account_stats(self, mock_read_rounds_played):
         client = app.test_client()
 
         with client.session_transaction() as saved_session:
@@ -151,6 +152,44 @@ class AuthenticationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("user", response.get_data(as_text=True))
+        self.assertIn("Your stats", response.get_data(as_text=True))
+
+    @patch("backend.app.read_rounds_played", side_effect=[0, 1])
+    @patch("backend.app.compare_two_countries")
+    @patch("backend.app.write_rounds_played")
+    def test_logged_account_stats_rounds_increment(self, mock_increment, mock_compare, mock_read):
+        fake_countries = {
+            "Japan": {"Flag": "JP", "Points": 2, "Population": 100, "Area(km)": 100},
+            "Germany": {"Flag": "DE", "Points": 0, "Population": 50, "Area(km)": 50},
+        }
+        client = app.test_client()
+
+        with client.session_transaction() as saved_session:
+            saved_session["logged"] = True
+            saved_session["username"] = "user"
+            saved_session["current_countries"] = ["Japan", "Germany"]
+            saved_session["answered"] = False
+
+        response = client.get("/account/stats")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("0", response.get_data(as_text=True))
+        self.assertIn("Your stats", response.get_data(as_text=True))
+
+        mock_compare.return_value = fake_countries
+
+        response = client.post("/", data={
+            "country1": "Japan",
+            "country2": "Germany",
+            "guess": "country1"
+        })
+        self.assertEqual(response.status_code, 200)
+        with client.session_transaction() as saved_session:
+            self.assertTrue(saved_session["answered"])
+
+        mock_increment.assert_called_once_with("user")
+        response = client.get("/account/stats")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("1", response.get_data(as_text=True))
         self.assertIn("Your stats", response.get_data(as_text=True))
 
     def test_logged_account_achievements(self):

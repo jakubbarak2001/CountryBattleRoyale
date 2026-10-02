@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 from werkzeug.utils import redirect
 
-from backend.db import create_user, login_user, read_rounds_played
+from backend.db import create_user, login_user, read_rounds_played, write_rounds_played
 from countries import compare_two_countries, select_and_compare_random_countries
 
 load_dotenv()
@@ -32,9 +32,6 @@ def index():
 
     if request.method == "GET":
         session.permanent = True
-
-        if session.get("logged", False):
-            print("Logged")
 
         if "current_countries" not in session or session.get("answered", False):
             country_comparison = select_and_compare_random_countries()
@@ -64,13 +61,15 @@ def index():
             if country_comparison[country_1]["Points"] == country_comparison[country_2]["Points"]:
                 is_correct = True
 
-
         if is_correct and not session["answered"]:
             session["streak"] = session.get("streak", 0) + 1
         elif not is_correct and not session["answered"]:
             session["streak"] = 0
         elif session["answered"]:
             print("You have already answered!")
+
+        if not session.get("answered", False) and session.get("logged", False) and session.get("username"):
+            write_rounds_played(session["username"])
 
         session["answered"] = True
 
