@@ -19,6 +19,17 @@ class GameTests(TestCase):
 
 
 class AuthenticationTests(TestCase):
+    def setUp(self):
+        self.mock_read_rounds_won = self.enterContext(
+            patch("backend.app.read_rounds_won", return_value=0, create=True)
+        )
+        self.mock_read_best_streak = self.enterContext(
+            patch("backend.app.read_best_streak", return_value=0)
+        )
+        self.mock_write_best_streak = self.enterContext(
+            patch("backend.app.write_best_streak")
+        )
+
     @patch("backend.app.create_user", return_value=1)
     def test_successful_registration(self, mock_create_user):
         form_data = {"username": "user",
@@ -154,10 +165,31 @@ class AuthenticationTests(TestCase):
         self.assertIn("user", response.get_data(as_text=True))
         self.assertIn("Your stats", response.get_data(as_text=True))
 
+    @patch("backend.app.read_rounds_played", return_value=12)
+    def test_logged_account_stats_displays_progress(self, mock_read_rounds_played):
+        self.mock_read_rounds_won.return_value = 1234
+        self.mock_read_best_streak.return_value = 7
+        client = app.test_client()
+
+        with client.session_transaction() as saved_session:
+            saved_session["logged"] = True
+            saved_session["username"] = "user"
+
+        response = client.get("/account/stats")
+        html = response.get_data(as_text=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertRegex(html, r"<dt>Rounds won</dt>\s*<dd>1,234</dd>")
+        self.assertRegex(html, r"<dt>Rounds played</dt>\s*<dd>12</dd>")
+        self.assertRegex(html, r"<dt>Best streak</dt>\s*<dd>7</dd>")
+        self.mock_read_rounds_won.assert_called_once_with("user")
+        self.mock_read_best_streak.assert_called_once_with("user")
+
+    @patch("backend.app.write_rounds_won", create=True)
     @patch("backend.app.read_rounds_played", side_effect=[0, 1])
     @patch("backend.app.compare_two_countries")
     @patch("backend.app.write_rounds_played")
-    def test_logged_account_stats_rounds_increment(self, mock_increment, mock_compare, mock_read):
+    def test_logged_account_stats_rounds_increment(self, mock_increment, mock_compare, mock_read, mock_won):
         fake_countries = {
             "Japan": {"Flag": "JP", "Points": 2, "Population": 100, "Area(km)": 100},
             "Germany": {"Flag": "DE", "Points": 0, "Population": 50, "Area(km)": 50},
@@ -191,6 +223,94 @@ class AuthenticationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("1", response.get_data(as_text=True))
         self.assertIn("Your stats", response.get_data(as_text=True))
+
+    @patch("backend.app.read_rounds_played", side_effect=[0, 1])
+    @patch("backend.app.compare_two_countries")
+    @patch("backend.app.write_rounds_played")
+    def test_logged_account_stats_rounds_won_wrong_answer(self, mock_increment,
+                                                          mock_compare,
+                                                          mock_read):
+        fake_countries = {
+            "Japan": {"Flag": "JP", "Points": 2, "Population": 100, "Area(km)": 100},
+            "Germany": {"Flag": "DE", "Points": 0, "Population": 50, "Area(km)": 50},
+        }
+        client = app.test_client()
+
+        with client.session_transaction() as saved_session:
+            saved_session["logged"] = True
+            saved_session["username"] = "user"
+            saved_session["current_countries"] = ["Japan", "Germany"]
+            saved_session["answered"] = False
+
+        response = client.get("/account/stats")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("0", response.get_data(as_text=True))
+        self.assertIn("Your stats", response.get_data(as_text=True))
+
+        mock_compare.return_value = fake_countries
+
+        with patch("backend.app.write_rounds_won", create=True) as mock_won:
+            response = client.post("/", data={
+                "country1": "Japan",
+                "country2": "Germany",
+                "guess": "country2",
+            })
+
+            self.assertEqual(response.status_code, 200)
+
+            with client.session_transaction() as saved_session:
+                self.assertTrue(saved_session["answered"])
+
+            mock_increment.assert_called_once_with("user")
+            mock_won.assert_not_called()
+
+    @patch("backend.app.read_rounds_played", side_effect=[0, 1])
+    @patch("backend.app.compare_two_countries")
+    @patch("backend.app.write_rounds_played")
+    @patch("backend.app.read_best_streak", return_value=0, create=True)
+    @patch("backend.app.write_best_streak", create=True)
+    def test_logged_account_stats_rounds_won_correct_answer(
+            self, mock_increment_streak, mock_read_streak,
+            mock_increment, mock_compare, mock_read
+    ):
+
+        fake_countries = {
+            "Japan": {"Flag": "JP", "Points": 2, "Population": 100, "Area(km)": 100},
+            "Germany": {"Flag": "DE", "Points": 0, "Population": 50, "Area(km)": 50},
+        }
+        client = app.test_client()
+
+        with client.session_transaction() as saved_session:
+            saved_session["logged"] = True
+            saved_session["username"] = "user"
+            saved_session["current_countries"] = ["Japan", "Germany"]
+            saved_session["answered"] = False
+            saved_session["streak"] = 0
+
+        response = client.get("/account/stats")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("0", response.get_data(as_text=True))
+        self.assertIn("Your stats", response.get_data(as_text=True))
+        mock_read_streak.assert_called_once_with("user")
+
+        mock_compare.return_value = fake_countries
+
+        with patch("backend.app.write_rounds_won", create=True) as mock_won:
+            response = client.post("/", data={
+                "country1": "Japan",
+                "country2": "Germany",
+                "guess": "country1",
+            })
+
+            self.assertEqual(response.status_code, 200)
+            mock_won.assert_called_once_with("user")
+            mock_increment_streak.assert_called_once_with("user")
+
+            with client.session_transaction() as saved_session:
+                self.assertTrue(saved_session["answered"])
+                self.assertEqual(saved_session["streak"], 1)
+
+            mock_increment.assert_called_once_with("user")
 
     def test_logged_account_achievements(self):
         client = app.test_client()

@@ -5,7 +5,8 @@ import os
 from dotenv import load_dotenv
 from werkzeug.utils import redirect
 
-from backend.db import create_user, login_user, read_rounds_played, write_rounds_played
+from backend.db import create_user, login_user, read_rounds_played, write_rounds_played, write_rounds_won, \
+    read_rounds_won, read_best_streak, write_best_streak
 from countries import compare_two_countries, select_and_compare_random_countries
 
 load_dotenv()
@@ -70,6 +71,11 @@ def index():
 
         if not session.get("answered", False) and session.get("logged", False) and session.get("username"):
             write_rounds_played(session["username"])
+            if is_correct:
+                write_rounds_won(session["username"])
+                best_streak = read_best_streak(session["username"])
+                if best_streak < session["streak"]:
+                    write_best_streak(session["username"])
 
         session["answered"] = True
 
@@ -143,13 +149,15 @@ def logout():
     return render_template("index.html", **get_game_context())
 
 
-def render_account(section: str = "account", rounds_played=None):
+def render_account(section: str = "account", rounds_played=None, rounds_won=None, best_streak=None):
 
     if session.get("logged", False) and session.get("username"):
         return render_template("account.html",
                                name = session["username"],
                                section=section,
-                               rounds_played=rounds_played)
+                               rounds_played=rounds_played,
+                               rounds_won=rounds_won,
+                               best_streak=best_streak)
 
     else:
         return redirect("/")
@@ -163,7 +171,12 @@ def account():
 def stats():
     if session.get("logged", False) and session.get("username"):
         rounds = read_rounds_played(session["username"])
-        return render_account("stats", rounds_played=rounds)
+        rounds_won = read_rounds_won(session["username"])
+        best_streak = read_best_streak(session["username"])
+        return render_account("stats",
+                              rounds_played=rounds,
+                              rounds_won=rounds_won,
+                              best_streak=best_streak)
     else:
         return redirect("/")
 
