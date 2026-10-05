@@ -23,6 +23,12 @@ class AuthenticationTests(TestCase):
         self.mock_read_rounds_won = self.enterContext(
             patch("backend.app.read_rounds_won", return_value=0, create=True)
         )
+        self.mock_read_best_streak = self.enterContext(
+            patch("backend.app.read_best_streak", return_value=0)
+        )
+        self.mock_write_best_streak = self.enterContext(
+            patch("backend.app.write_best_streak")
+        )
 
     @patch("backend.app.create_user", return_value=1)
     def test_successful_registration(self, mock_create_user):
@@ -258,9 +264,13 @@ class AuthenticationTests(TestCase):
     @patch("backend.app.read_rounds_played", side_effect=[0, 1])
     @patch("backend.app.compare_two_countries")
     @patch("backend.app.write_rounds_played")
-    def test_logged_account_stats_rounds_won_correct_answer(self, mock_increment,
-                                                          mock_compare,
-                                                          mock_read):
+    @patch("backend.app.read_best_streak", return_value=0, create=True)
+    @patch("backend.app.write_best_streak", create=True)
+    def test_logged_account_stats_rounds_won_correct_answer(
+            self, mock_increment_streak, mock_read_streak,
+            mock_increment, mock_compare, mock_read
+    ):
+
         fake_countries = {
             "Japan": {"Flag": "JP", "Points": 2, "Population": 100, "Area(km)": 100},
             "Germany": {"Flag": "DE", "Points": 0, "Population": 50, "Area(km)": 50},
@@ -272,11 +282,13 @@ class AuthenticationTests(TestCase):
             saved_session["username"] = "user"
             saved_session["current_countries"] = ["Japan", "Germany"]
             saved_session["answered"] = False
+            saved_session["streak"] = 0
 
         response = client.get("/account/stats")
         self.assertEqual(response.status_code, 200)
         self.assertIn("0", response.get_data(as_text=True))
         self.assertIn("Your stats", response.get_data(as_text=True))
+        mock_read_streak.assert_called_once_with("user")
 
         mock_compare.return_value = fake_countries
 
@@ -289,9 +301,11 @@ class AuthenticationTests(TestCase):
 
             self.assertEqual(response.status_code, 200)
             mock_won.assert_called_once_with("user")
+            mock_increment_streak.assert_called_once_with("user")
 
             with client.session_transaction() as saved_session:
                 self.assertTrue(saved_session["answered"])
+                self.assertEqual(saved_session["streak"], 1)
 
             mock_increment.assert_called_once_with("user")
 

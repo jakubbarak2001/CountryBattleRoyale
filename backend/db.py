@@ -104,3 +104,24 @@ def read_rounds_won(entered_username):
             rounds_won = row[0]
 
             return rounds_won
+
+def write_best_streak(entered_username):
+    with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET best_streak = best_streak + 1 WHERE username = %s",
+                        (entered_username,))
+
+def read_best_streak(entered_username):
+    with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT best_streak FROM users WHERE username = %s",
+                        (entered_username,))
+
+            row = cur.fetchone()
+
+            if row is None:
+                return None
+
+            best_streak = row[0]
+
+            return best_streak
