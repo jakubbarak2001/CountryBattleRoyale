@@ -166,8 +166,9 @@ class AuthenticationTests(TestCase):
         self.assertIn("Your stats", response.get_data(as_text=True))
 
     @patch("backend.app.read_rounds_played", return_value=12)
-    def test_logged_account_stats_displays_rounds_won(self, mock_read_rounds_played):
+    def test_logged_account_stats_displays_progress(self, mock_read_rounds_played):
         self.mock_read_rounds_won.return_value = 1234
+        self.mock_read_best_streak.return_value = 7
         client = app.test_client()
 
         with client.session_transaction() as saved_session:
@@ -180,7 +181,9 @@ class AuthenticationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertRegex(html, r"<dt>Rounds won</dt>\s*<dd>1,234</dd>")
         self.assertRegex(html, r"<dt>Rounds played</dt>\s*<dd>12</dd>")
+        self.assertRegex(html, r"<dt>Best streak</dt>\s*<dd>7</dd>")
         self.mock_read_rounds_won.assert_called_once_with("user")
+        self.mock_read_best_streak.assert_called_once_with("user")
 
     @patch("backend.app.write_rounds_won", create=True)
     @patch("backend.app.read_rounds_played", side_effect=[0, 1])

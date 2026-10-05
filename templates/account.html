@@ -54,7 +54,7 @@
                 <div class="account-section-heading">
                     <p class="eyebrow">Your record</p>
                     <h2 id="section-title">Every round counts<span class="brand-period">.</span></h2>
-                    <p>Your completed rounds and wins, at a glance. Best streak stats are coming soon.</p>
+                    <p>Your completed rounds, wins, and best streak, at a glance.</p>
                 </div>
                 <dl class="account-stat-grid">
                     <div class="account-stat">
@@ -65,13 +65,19 @@
                         <dt>Rounds won</dt>
                         <dd>{% if rounds_won is defined and rounds_won is not none %}{{ '{:,}'.format(rounds_won) }}{% else %}<span aria-hidden="true">&mdash;</span><span class="account-coming-soon">Unavailable</span>{% endif %}</dd>
                     </div>
-                    <div class="account-stat"><dt>Best streak</dt><dd><span aria-hidden="true">&mdash;</span><span class="account-coming-soon">Coming soon</span></dd></div>
+                    <div class="account-stat">
+                        <dt>Best streak</dt>
+                        <dd>{% if best_streak is defined and best_streak is not none %}{{ '{:,}'.format(best_streak) }}{% else %}<span aria-hidden="true">&mdash;</span><span class="account-coming-soon">Unavailable</span>{% endif %}</dd>
+                    </div>
                 </dl>
                 {% if rounds_played is not defined or rounds_played is none %}
                 <p class="account-footnote">Rounds played couldn't be loaded. Try again later.</p>
                 {% endif %}
                 {% if rounds_won is not defined or rounds_won is none %}
                 <p class="account-footnote">Rounds won couldn't be loaded. Try again later.</p>
+                {% endif %}
+                {% if best_streak is not defined or best_streak is none %}
+                <p class="account-footnote">Best streak couldn't be loaded. Try again later.</p>
                 {% endif %}
                 {% elif current_section == 'achievements' %}
                 <div class="account-section-heading">
