@@ -1,6 +1,7 @@
 import psycopg.errors
 from argon2.exceptions import VerifyMismatchError
-from flask import Flask, render_template, request, session, jsonify, url_for
+from flask import Flask, render_template, request, session, jsonify
+from flask_wtf import CSRFProtect
 import os
 from dotenv import load_dotenv
 from werkzeug.utils import redirect
@@ -13,6 +14,7 @@ load_dotenv()
 
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
 app.config["SECRET_KEY"] = os.environ["FLASK_SECRET_KEY"]
+csrf = CSRFProtect(app)
 
 
 def get_game_context():

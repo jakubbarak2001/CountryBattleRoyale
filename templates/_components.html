@@ -62,6 +62,7 @@
                 <p class="account-status">Signed in. Ready for the next round.</p>
                 {{ account_navigation(section|default(request.endpoint, true), dropdown=true) }}
                 <form action="/logout" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button class="account-logout" id="account-logout" type="submit">Log out {{ icon('login') }}</button>
                 </form>
             </div>
