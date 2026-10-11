@@ -2,8 +2,9 @@ from http.client import responses
 from unittest import TestCase
 from unittest.mock import patch
 
+from flask import session
+from flask_wtf.csrf import generate_csrf
 from psycopg.errors import UniqueViolation
-from requests import session
 
 import backend.app
 from backend.app import app
@@ -30,12 +31,21 @@ class AuthenticationTests(TestCase):
             patch("backend.app.write_best_streak")
         )
 
+    def csrf_token(self, client):
+        # Give the test browser a token and its matching session value.
+        with app.test_request_context():
+            token = generate_csrf()
+            with client.session_transaction() as saved_session:
+                saved_session["csrf_token"] = session["csrf_token"]
+        return token
+
     @patch("backend.app.create_user", return_value=1)
     def test_successful_registration(self, mock_create_user):
+        client = app.test_client()
         form_data = {"username": "user",
                      "password": "12345678",
-                     "email": "user@mail.com"}
-        client = app.test_client()
+                     "email": "user@mail.com",
+                     "csrf_token": self.csrf_token(client)}
         response = client.post("/register", data=form_data)
         mock_create_user.assert_called_once_with(
             "user", "12345678", "user@mail.com"
@@ -68,10 +78,11 @@ class AuthenticationTests(TestCase):
 
     @patch("backend.app.create_user", side_effect=UniqueViolation)
     def test_existing_credentials_cause_unique_violation(self, mock_create_user):
+        client = app.test_client()
         form_data = {"username": "user",
                      "password": "12345678",
-                     "email": "user@mail.com"}
-        client = app.test_client()
+                     "email": "user@mail.com",
+                     "csrf_token": self.csrf_token(client)}
         response = client.post("/register", data=form_data)
         self.assertEqual(response.status_code, 409)
 
@@ -83,8 +94,9 @@ class AuthenticationTests(TestCase):
 
     @patch("backend.app.login_user", return_value=True)
     def test_successful_login_without_countries(self, mock_login_user):
-        form_data = {"username": "user", "password": "12345678"}
         client = app.test_client()
+        form_data = {"username": "user", "password": "12345678",
+                     "csrf_token": self.csrf_token(client)}
         with client.session_transaction() as saved_session:
             self.assertNotIn("current_countries", saved_session)
 
@@ -108,7 +120,8 @@ class AuthenticationTests(TestCase):
         with client.session_transaction() as saved_session:
             saved_session["current_countries"] = ["Japan", "Germany"]
 
-        form_data = {"username": "user", "password": "12345678"}
+        form_data = {"username": "user", "password": "12345678",
+                     "csrf_token": self.csrf_token(client)}
         response = client.post("/login", data = form_data)
         self.assertEqual(response.status_code, 200)
 
@@ -212,7 +225,8 @@ class AuthenticationTests(TestCase):
         response = client.post("/", data={
             "country1": "Japan",
             "country2": "Germany",
-            "guess": "country1"
+            "guess": "country1",
+            "csrf_token": self.csrf_token(client),
         })
         self.assertEqual(response.status_code, 200)
         with client.session_transaction() as saved_session:
@@ -254,6 +268,7 @@ class AuthenticationTests(TestCase):
                 "country1": "Japan",
                 "country2": "Germany",
                 "guess": "country2",
+                "csrf_token": self.csrf_token(client),
             })
 
             self.assertEqual(response.status_code, 200)
@@ -300,6 +315,7 @@ class AuthenticationTests(TestCase):
                 "country1": "Japan",
                 "country2": "Germany",
                 "guess": "country1",
+                "csrf_token": self.csrf_token(client),
             })
 
             self.assertEqual(response.status_code, 200)

@@ -1,6 +1,9 @@
 import psycopg.errors
 from argon2.exceptions import VerifyMismatchError
-from flask import Flask, render_template, request, session, jsonify, url_for
+from flask import Flask, render_template, request, session, jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_wtf import CSRFProtect
 import os
 from dotenv import load_dotenv
 from werkzeug.utils import redirect
@@ -13,7 +16,13 @@ load_dotenv()
 
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
 app.config["SECRET_KEY"] = os.environ["FLASK_SECRET_KEY"]
-
+csrf = CSRFProtect(app)
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    storage_uri="redis://127.0.0.1:6379/0",
+    strategy="moving-window",
+)
 
 def get_game_context():
     country_1, country_2 = session["current_countries"]
@@ -121,6 +130,7 @@ def registration_success():
 
 
 @app.route("/login", methods=["POST"])
+@limiter.limit("30 per 15 minutes")
 def login():
 
     username = request.form["username"]
