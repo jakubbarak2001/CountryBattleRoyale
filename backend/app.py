@@ -100,6 +100,7 @@ def index():
         )
 
 @app.route("/register", methods=["POST"])
+@limiter.limit("10 per hour")
 def register():
 
     name = request.form["username"]
