@@ -1,5 +1,6 @@
+import re
 import psycopg.errors
-from argon2.exceptions import VerifyMismatchError
+from email_validator import validate_email, EmailNotValidError
 from flask import Flask, render_template, request, session, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -102,13 +103,49 @@ def index():
 @app.route("/register", methods=["POST"])
 @limiter.limit("10 per hour")
 def register():
-
-    name = request.form["username"]
+    username = request.form.get("username", "")
+    email = request.form.get("email", "")
+    password = request.form.get("password", "")
     try:
+
+        fields = {
+            "username": username,
+            "email": email,
+            "password": password,
+        }
+
+        for field, value in fields.items():
+            if value == "":
+                errors = {field: f"The {field} is empty, enter some value."}
+                return jsonify(errors=errors), 400
+        if re.fullmatch("[A-Za-z0-9_]{3,30}", username) is None:
+            errors = {
+                "username": "Username must contain 3-30 letters, digits or underscores."
+            }
+            return jsonify(errors=errors), 400
+
+        if len(email) > 254:
+            errors = {"email": "Your email address is not in valid format."}
+            return jsonify(errors=errors), 400
+        try:
+            validate_email(email, check_deliverability=False)
+        except EmailNotValidError:
+            errors = {"email": "Your email address is not in valid format."}
+            return jsonify(errors=errors), 400
+
+        if not 8 <= len(password) <= 128:
+            errors = {"password": "Your password has to to be between 8-128 characters."}
+            return jsonify(errors=errors), 400
+        with open("10k-most-common.txt", "r") as file:
+            for line in file:
+                if password == line.strip("\r\n"):
+                    errors = {"password": "Your password is too common, try different one."}
+                    return jsonify(errors=errors), 400
+
         create_user(request.form["username"], request.form["password"], request.form["email"])
         session["logged"] = True
-        session["username"] = name
-        return jsonify(success=True, name=name, logged=session["logged"]), 201
+        session["username"] = username
+        return jsonify(success=True, name=username, logged=session["logged"]), 201
 
     except psycopg.errors.UniqueViolation as exc:
         error = exc.diag.constraint_name
