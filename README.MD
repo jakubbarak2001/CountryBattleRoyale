@@ -31,7 +31,7 @@ flowchart LR
     end
 ```
 
-PostgreSQL stores accounts and game progress. Redis stores temporary request-limit counters shared across Flask processes. Compose runs Redis with a health check and a persistent volume; Flask and PostgreSQL run separately.
+PostgreSQL stores accounts, issued rounds, and game progress. Each round can count once; completion and account statistics are saved together, including when requests arrive simultaneously. Redis stores temporary request-limit counters shared across Flask processes. Compose runs Redis with a health check and a persistent volume; Flask and PostgreSQL run separately.
 
 ## Request flows
 
@@ -73,6 +73,14 @@ python -c "import secrets; print(secrets.token_hex(32))"
 
 Paste the output into `FLASK_SECRET_KEY`. Keep `.env` out of Git.
 
+Create the round table after the existing `users` table (the same SQL also updates the earlier round table):
+
+```bash
+psql "$DATABASE_URL" -f docs/sql/rounds.sql
+```
+
+This command expects `DATABASE_URL` to be exported in your shell.
+
 <details>
 <summary>Already running Redis as a Linux service?</summary>
 
@@ -99,10 +107,12 @@ Country data downloads need an internet connection and a valid API key when the 
 ## Tests
 
 ```bash
-python -m unittest tests -v
+python -m unittest discover -v
 ```
 
-Start Redis before running tests; GitHub Actions starts its own Redis container. The country-comparison test uses the country cache and may need API access to refresh it.
+Start Redis before running tests. To include the PostgreSQL replay tests, set `TEST_DATABASE_URL` to a test database. These tests create and remove isolated schemas and do not use the application's tables. Without that variable, PostgreSQL tests are skipped. GitHub Actions runs the full suite with PostgreSQL and Redis.
+
+The replay tests cover old cookies, guest and account ownership, simultaneous submissions, and rollback when saving statistics fails.
 
 ---
 

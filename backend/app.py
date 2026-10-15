@@ -1,4 +1,6 @@
 import re
+from secrets import token_urlsafe
+
 import psycopg.errors
 from email_validator import validate_email, EmailNotValidError
 from flask import Flask, render_template, request, session, jsonify
@@ -9,8 +11,8 @@ import os
 from dotenv import load_dotenv
 from werkzeug.utils import redirect
 
-from backend.db import create_user, login_user, read_rounds_played, write_rounds_played, write_rounds_won, \
-    read_rounds_won, read_best_streak, write_best_streak
+from backend.db import create_user, login_user, read_rounds_played, \
+    read_rounds_won, read_best_streak, create_round, complete_round
 from countries import compare_two_countries, select_and_compare_random_countries
 
 load_dotenv()
@@ -44,10 +46,18 @@ def index():
     if request.method == "GET":
         session.permanent = True
 
-        if "current_countries" not in session or session.get("answered", False):
+        if ("current_countries" not in session or "round_id" not in session
+                or session.get("answered", False)):
             country_comparison = select_and_compare_random_countries()
             session["current_countries"] = list(country_comparison.keys())
             session["answered"] = False
+            if not session.get("guest_id"):
+                session["guest_id"] = token_urlsafe(32)
+
+            if session.get("logged") and session.get("user_id"):
+                session["round_id"] = create_round(user_id=session["user_id"])
+            else:
+                session["round_id"] = create_round(guest_id=session["guest_id"])
 
         return render_template(
             "index.html",
@@ -55,9 +65,12 @@ def index():
         )
 
     if request.method == "POST":
-        country_1 = request.form["country1"]
-        country_2 = request.form["country2"]
-        guess = request.form["guess"]
+        if "current_countries" not in session or "round_id" not in session:
+            return jsonify(errors={"form": "Load a new matchup before answering."}), 400
+        guess = request.form.get("guess")
+        if guess not in ("country1", "country2", "draw"):
+            return jsonify(errors={"form": "Choose a country or a draw."}), 400
+        country_1, country_2 = session["current_countries"]
 
         country_comparison = compare_two_countries(country_1, country_2)
 
@@ -72,21 +85,17 @@ def index():
             if country_comparison[country_1]["Points"] == country_comparison[country_2]["Points"]:
                 is_correct = True
 
-        if is_correct and not session["answered"]:
-            session["streak"] = session.get("streak", 0) + 1
-        elif not is_correct and not session["answered"]:
-            session["streak"] = 0
-        elif session["answered"]:
-            print("You have already answered!")
+        streak = session.get("streak", 0) + 1 if is_correct else 0
+        user_id = session.get("user_id") if session.get("logged") else None
+        if not complete_round(
+            session["round_id"], user_id=user_id,
+            guest_id=session.get("guest_id"), is_correct=is_correct, streak=streak,
+        ):
+            # The cookie can be old; the database decides whether this counts.
+            session["answered"] = True
+            return jsonify(errors={"form": "This round is unavailable or already answered. Load a new matchup."}), 409
 
-        if not session.get("answered", False) and session.get("logged", False) and session.get("username"):
-            write_rounds_played(session["username"])
-            if is_correct:
-                write_rounds_won(session["username"])
-                best_streak = read_best_streak(session["username"])
-                if best_streak < session["streak"]:
-                    write_best_streak(session["username"])
-
+        session["streak"] = streak
         session["answered"] = True
 
         return render_template(
@@ -142,7 +151,7 @@ def register():
                     errors = {"password": "Your password is too common, try different one."}
                     return jsonify(errors=errors), 400
 
-        create_user(request.form["username"], request.form["password"], request.form["email"])
+        session["user_id"] = create_user(username, password, email)
         session["logged"] = True
         session["username"] = username
         return jsonify(success=True, name=username, logged=session["logged"]), 201
@@ -172,8 +181,9 @@ def registration_success():
 def login():
 
     username = request.form["username"]
-    valid_login =  login_user(request.form["username"], request.form["password"])
-    if valid_login:
+    user_id = login_user(request.form["username"], request.form["password"])
+    if user_id:
+        session["user_id"] = user_id
         session["logged"] = True
         session["username"] = username
         if "current_countries" not in session:
@@ -191,10 +201,11 @@ def logout():
 
     session["logged"] = False
     session.pop("username", None)
-    if "current_countries" not in session:
-        return redirect("/")
-
-    return render_template("index.html", **get_game_context())
+    session.pop("user_id", None)
+    session.pop("round_id", None)
+    session.pop("current_countries", None)
+    session["streak"] = 0
+    return redirect("/")
 
 
 def render_account(section: str = "account", rounds_played=None, rounds_won=None, best_streak=None):

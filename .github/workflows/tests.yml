@@ -16,6 +16,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: cbr_test
+          POSTGRES_PASSWORD: cbr_test
+          POSTGRES_DB: cbr_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cbr_test -d cbr_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
       redis:
         image: redis:8.2.10-alpine
         ports:
@@ -27,6 +40,7 @@ jobs:
           --health-retries 5
     env:
       FLASK_SECRET_KEY: ci-test-only-secret
+      TEST_DATABASE_URL: postgresql://cbr_test:cbr_test@127.0.0.1:5432/cbr_test
 
     steps:
       - name: Check out code
