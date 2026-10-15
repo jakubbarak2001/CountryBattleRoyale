@@ -47,7 +47,7 @@ def login_user(entered_username, password):
 
     if verification:
         write_login_timestamp(row[0])
-        return True
+        return row[0]
 
     else:
         return False
@@ -125,3 +125,43 @@ def read_best_streak(entered_username):
             best_streak = row[0]
 
             return best_streak
+
+def complete_round(round_id, *, user_id=None, guest_id=None, is_correct=False, streak=0):
+    """Claim a round and save its score in the same database transaction."""
+    with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE rounds SET completed = TRUE "
+                "WHERE round_id = %s AND completed = FALSE "
+                "AND (user_id = %s OR (user_id IS NULL AND guest_id = %s)) "
+                "RETURNING round_id",
+                (round_id, user_id, guest_id),
+            )
+            if cur.fetchone() is None:
+                return False
+
+            # A guest can log in during a round. Their guest ID still proves
+            # ownership, and the result now counts towards their account.
+            if user_id is not None:
+                cur.execute(
+                    "UPDATE users SET rounds_played = rounds_played + 1, "
+                    "rounds_won = rounds_won + %s, "
+                    "best_streak = GREATEST(best_streak, %s) WHERE id = %s",
+                    (int(is_correct), streak, user_id),
+                )
+                if cur.rowcount != 1:
+                    raise ValueError("The round's player account no longer exists")
+
+            return True
+
+
+def create_round(user_id=None, guest_id=None):
+    if (user_id is None) == (guest_id is None):
+        raise ValueError("A round needs exactly one owner")
+
+    with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+        with conn.cursor() as cur:
+            cur.execute("INSERT INTO rounds (user_id, guest_id) VALUES (%s, %s) RETURNING round_id",
+                        (user_id, guest_id,))
+
+            return cur.fetchone()[0]
