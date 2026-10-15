@@ -107,7 +107,7 @@ function setupRegistration() {
 
     function showErrors(errors) {
         clearErrors();
-        for (const key of ["username", "email", "form"]) {
+        for (const key of ["username", "email", "password", "form"]) {
             const message = errors?.[key];
             if (typeof message !== "string" || !message.trim()) continue;
 
@@ -176,7 +176,9 @@ function setupRegistration() {
             success.hidden = false;
             guest.textContent = "Back to game";
             success.focus();
-        } else if (response?.status === 409 && result?.errors) {
+        } else if (response?.status === 429) {
+            showErrors({ form: "Too many registration attempts. Please wait before trying again." });
+        } else if ([400, 409].includes(response?.status) && result?.errors) {
             showErrors(result.errors);
         } else {
             showErrors({ form: "We couldn't confirm your registration. Please try again." });

@@ -21,10 +21,11 @@
         <div class="auth-field">
             <label for="register-password">Password</label>
             <div class="auth-password">
-                <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" aria-describedby="register-password-hint" placeholder="At least 8 characters" required>
+                <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" aria-describedby="register-password-hint register-password-error" {% if registration_errors.get('password') %}aria-invalid="true"{% endif %} placeholder="At least 8 characters" required>
                 <button class="auth-password-toggle" id="toggle-register-password" type="button" aria-controls="register-password" aria-label="Show password" aria-pressed="false">Show</button>
             </div>
             <p class="auth-hint" id="register-password-hint">Use at least 8 characters.</p>
+            <p class="auth-error" id="register-password-error" role="alert" {% if not registration_errors.get('password') %}hidden{% endif %}>{{ registration_errors.get('password', '') }}</p>
         </div>
         <button class="auth-submit" type="submit">Create account</button>
     </form>
