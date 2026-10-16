@@ -23,7 +23,7 @@ csrf = CSRFProtect(app)
 limiter = Limiter(
     key_func=get_remote_address,
     app=app,
-    storage_uri="redis://127.0.0.1:6379/0",
+    storage_uri=os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0"),
     strategy="moving-window",
 )
 
@@ -251,4 +251,4 @@ def settings():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()

@@ -16,5 +16,38 @@ services:
       retries: 5
       start_period: 5s
 
+  database:
+    restart: unless-stopped
+    image: 'postgres:18'
+    environment:
+      POSTGRES_DB: cbrdb
+      POSTGRES_USER: cbr_app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U cbr_app -d cbrdb" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://cbr_app:${POSTGRES_PASSWORD}@database:5432/cbrdb
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+
 volumes:
   redis-data:
+  postgres_data:
