@@ -21,13 +21,6 @@ A geography game: two countries, one call. Pick the winner on population and are
 - **Reveal:** statistics stay hidden until you answer. Correct guesses build your streak.
 - **Return:** play as a guest, or register to save rounds played, wins, and your best streak.
 
-## Technical highlights
-
-- **Backend and data:** Flask routes, Jinja templates, PostgreSQL accounts and statistics, and REST Countries data with a seven-day JSON cache.
-- **Security:** Argon2 password hashing, input validation, CSRF protection and Redis-backed authentication rate limits.
-- **Round integrity:** round ownership and score updates are checked in a PostgreSQL transaction, preventing duplicate submissions from counting twice.
-- **Development and checks:** Docker Compose services for Flask, PostgreSQL and Redis; automated route and database tests in GitHub Actions.
-
 ## Architecture
 
 ```mermaid
