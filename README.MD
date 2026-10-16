@@ -2,6 +2,10 @@
 
 A geography game: two countries, one call. Pick the winner on population and area, build a streak, and save your progress with an account.
 
+**Live and self-hosted: [countrybattleroyale.com](https://countrybattleroyale.com)**
+
+[Play the game](https://countrybattleroyale.com) · [Browse the tests](test_rounds.py) · [GitHub Actions](https://github.com/jakubbarak2001/CountryBattleRoyale/actions/workflows/tests.yml)
+
 [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-222222?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -17,21 +21,29 @@ A geography game: two countries, one call. Pick the winner on population and are
 - **Reveal:** statistics stay hidden until you answer. Correct guesses build your streak.
 - **Return:** play as a guest, or register to save rounds played, wins, and your best streak.
 
+## Technical highlights
+
+- **Backend and data:** Flask routes, Jinja templates, PostgreSQL accounts and statistics, and REST Countries data with a seven-day JSON cache.
+- **Security:** Argon2 password hashing, input validation, CSRF protection and Redis-backed authentication rate limits.
+- **Round integrity:** round ownership and score updates are checked in a PostgreSQL transaction, preventing duplicate submissions from counting twice.
+- **Development and checks:** Docker Compose services for Flask, PostgreSQL and Redis; automated route and database tests in GitHub Actions.
+
 ## Architecture
 
 ```mermaid
 flowchart LR
-    Browser["Browser<br/>Jinja templates + JavaScript"] <-->|"Forms + session cookie"| Flask["Flask<br/>Game + accounts + CSRF"]
-    Flask <-->|"Accounts + progress"| Postgres[(PostgreSQL)]
+    Browser["Browser<br/>Jinja templates + JavaScript"] <-->|"Forms + session cookie"| Flask
+    subgraph Compose["Docker Compose services"]
+        Flask["Flask<br/>Game + accounts + CSRF"]
+        Postgres[(PostgreSQL)]
+        Redis[(Redis)]
+    end
+    Flask <-->|"Accounts + progress"| Postgres
     Flask -->|"Country data"| Countries["REST Countries API<br/>7-day JSON cache"]
     Flask <-->|"Flask-Limiter counters"| Redis
-    subgraph Compose["Docker Compose"]
-        Redis[(Redis)]
-        Redis -->|"Persistence"| Data["Docker volume"]
-    end
 ```
 
-PostgreSQL stores accounts, issued rounds, and game progress. Each round can count once; completion and account statistics are saved together, including when requests arrive simultaneously. Redis stores temporary request-limit counters shared across Flask processes. Compose runs Redis with a health check and a persistent volume; Flask and PostgreSQL run separately.
+PostgreSQL stores accounts, issued rounds, and game progress. Each round can count once; completion and account statistics are saved together, including when requests arrive simultaneously. Redis stores temporary request-limit counters shared across Flask processes. The Compose file defines the Flask application, PostgreSQL and Redis services, with health checks for both data services and persistent database and Redis volumes.
 
 ## Request flows
 
@@ -49,6 +61,8 @@ Limits are **30 login attempts per 15 minutes** and **10 registration attempts p
 Session cookies keep the browser signed in. Redis counters stay on the server, so clearing browser cookies does not reset rate limits. Excess attempts receive `429 Too Many Requests`.
 
 ## Run locally
+
+The development setup below runs Flask and PostgreSQL on the host and uses the Redis Compose service. The full Compose configuration is also included in [`compose.yaml`](compose.yaml); a new database still needs the application schema before play.
 
 Requires **Python 3.12+**, **Docker Compose**, and **PostgreSQL** with the project's `users` table. From the project root:
 
