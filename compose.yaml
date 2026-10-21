@@ -39,6 +39,7 @@ services:
     env_file:
       - .env
     environment:
+      FLASK_DEBUG: "0"
       DATABASE_URL: postgresql://cbr_app:${POSTGRES_PASSWORD}@database:5432/cbrdb
       REDIS_URL: redis://redis:6379/0
     depends_on:

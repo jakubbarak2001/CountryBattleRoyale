@@ -143,7 +143,7 @@ def register():
             return jsonify(errors=errors), 400
 
         if not 8 <= len(password) <= 128:
-            errors = {"password": "Your password has to to be between 8-128 characters."}
+            errors = {"password": "Your password must be between 8 and 128 characters."}
             return jsonify(errors=errors), 400
         with open("10k-most-common.txt", "r") as file:
             for line in file:

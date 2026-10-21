@@ -100,6 +100,13 @@ docker compose exec redis redis-cli ping
 python -m flask --app backend.app run --debug
 ```
 
+For automatic reload when starting `backend/app.py` directly from your IDE, set
+`FLASK_DEBUG=1` in your local, gitignored `.env`, then restart the app once.
+Python changes restart the development server; refresh the browser to see template
+and CSS changes. Use this setting only for local development. Docker and Compose
+set `FLASK_DEBUG=0`, and GitHub Actions checks that the production app has debug
+disabled. The local `.env` is excluded from Docker builds.
+
 Open **[localhost:5000](http://127.0.0.1:5000)**. Redis is available at `redis://127.0.0.1:6379/0`; its port is bound to localhost. Stop it with `docker compose stop redis`; the data volume is retained.
 
 Country data downloads need an internet connection and a valid API key when the cache is missing or older than seven days.

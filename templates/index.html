@@ -56,24 +56,20 @@
 <body>
     <a class="skip-link" href="#arena">Skip to the game</a>
     {{ ui.header() }}
-    <main class="page-width">
+    <main class="game-main page-width">
         <section class="arena{% if data %} arena--answered{% endif %}" id="arena" aria-labelledby="page-title" tabindex="-1">
-            <div class="game-heading">
-                <div>
-                    <p class="eyebrow heading-eyebrow">The geography showdown</p>
-                    <h1 id="page-title">The world.<br><em>Head to head.</em></h1>
-                </div>
-                <div class="game-intro">
-                    <p class="game-question">Which country takes the round?</p>
-                    <p>One point for the larger population.<br> One point for the larger area.</p>
-                    <p class="game-instruction">Pick the winner. Equal points? Pick a draw.</p>
-                </div>
-            </div>
             <div class="arena-bar">
-                <p class="eyebrow">{% if data %}The final score{% else %}Make your call{% endif %}</p>
+                <h1 id="page-title">{% if data %}The final score{% else %}Pick the winner{% endif %}</h1>
                 <div class="streak-counter" role="status" aria-label="Current streak: {{ streak }} correct {{ 'guess' if streak == 1 else 'guesses' }} in a row">
                     <span class="streak-label">Current streak</span><span class="streak-number">{{ streak }}</span>
                 </div>
+            </div>
+            <div class="game-rules" aria-label="Scoring rules">
+                <p class="rule-points">
+                    <span>Larger population <strong>+1 point</strong></span>
+                    <span>Larger area <strong>+1 point</strong></span>
+                </p>
+                <p class="rule-examples"><span><strong>2–0?</strong> Pick that country.</span><span><strong>Equal points?</strong> Pick a draw (e.g. 1–1).</span></p>
             </div>
             {% if data %}
             <div class="result-message {{ 'result-message--correct' if is_correct else 'result-message--incorrect' }}" role="status">
@@ -98,7 +94,6 @@
                 {% if not round_answered %}
                 <div class="draw-choice">
                     <button class="draw-button" type="submit" form="guess-form" name="guess" value="draw">{{ ui.icon('equal') }} Pick a draw</button>
-                    <span class="draw-hint">Think they split the points?</span>
                 </div>
                 {% else %}
                 <form class="new-matchup-form" method="get" action="{{ url_for('index') }}">
@@ -106,11 +101,10 @@
                 </form>
                 {% endif %}
             </div>
-            {% if not data %}<p class="reveal-note">The numbers stay hidden until you answer.</p>{% endif %}
         </section>
     </main>
     <footer class="site-footer page-width">
-        <span>Country Battle Royale</span><span>A game of scale &amp; instinct.</span>
+        <span>Country Battle Royale</span><span>v0.1.0 · Public Beta</span>
     </footer>
     {% include '_auth-dialogs.html' %}
 </body>
