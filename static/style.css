@@ -106,16 +106,15 @@ button, input, a, summary { outline-offset: 4px; }
 .account-logout:hover { color: var(--accent); }
 
 /* The matchup is one composition, divided into two equal contenders. */
-.arena { padding-bottom: 32px; }
-.game-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; padding-block: 26px 24px; }
-.heading-eyebrow { margin-bottom: 9px; color: var(--accent); }
-.game-heading h1 { font-family: var(--display); font-size: clamp(45px, 3.7vw, 54px); font-weight: 700; line-height: .98; letter-spacing: -1.3px; text-transform: uppercase; }
-.game-heading h1 em { font-family: var(--serif); font-size: .92em; font-weight: 400; line-height: 1.14; letter-spacing: -2px; text-transform: none; }
-.game-intro { padding-bottom: 4px; color: var(--muted); font-size: 13px; line-height: 1.7; }
-.game-question { margin-bottom: 8px; color: var(--ink); font-size: 18px; font-weight: 600; }
-.game-instruction { margin-top: 8px; }
-.arena-bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 46px; border-top: 2px solid var(--ink); }
-.arena-bar > .eyebrow { color: var(--muted); }
+.game-main { flex: 0; padding-top: 20px; }
+.arena-bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 40px; }
+.arena-bar h1 { font-family: var(--display); font-size: 28px; font-weight: 700; line-height: 1.2; }
+.game-rules { display: grid; gap: 7px; padding-block: 4px 16px; color: var(--muted); font-size: 12px; }
+.rule-points { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.rule-points > span { display: inline-flex; align-items: baseline; gap: 8px; }
+.rule-points strong { color: #8b4f2e; font-size: 12px; white-space: nowrap; }
+.rule-examples { display: flex; flex-wrap: wrap; gap: 2px 5px; }
+.rule-examples strong { color: #8b4f2e; font-weight: 600; }
 .streak-counter { display: flex; align-items: baseline; gap: 12px; }
 .streak-label { color: var(--muted); font-size: 11px; }
 .streak-number { font-family: var(--display); font-size: 25px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
@@ -142,18 +141,16 @@ button, input, a, summary { outline-offset: 4px; }
 .country-choice:hover { border-color: var(--accent); background: var(--accent); }
 .country-choice:active { background: var(--accent-hover); }
 .versus { position: absolute; z-index: 1; top: 126px; left: 50%; display: grid; place-items: center; width: 44px; height: 44px; transform: translateX(-50%); background: var(--ink); color: var(--surface); font-family: var(--display); font-size: 19px; font-weight: 700; letter-spacing: .5px; }
-.round-footer { display: flex; align-items: center; justify-content: center; gap: 20px; min-height: 80px; padding-block: 16px; border-bottom: 1px solid var(--line); }
+.round-footer { display: flex; align-items: center; justify-content: center; gap: 20px; min-height: 80px; padding-block: 16px; }
 .round-footer--answered { justify-content: flex-end; }
 .draw-choice { display: flex; align-items: center; gap: 16px; }
 .draw-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 46px; padding: 10px 19px; border: 1px solid #969b92; border-radius: 2px; background: transparent; font-size: 13px; font-weight: 600; transition: border-color .16s, background .16s; }
 .draw-button:hover { border-color: var(--ink); background: #e8e8e0; }
 .draw-button .icon { width: 17px; height: 17px; }
-.draw-hint { color: var(--muted); font-size: 12px; }
 .new-matchup-form { flex-shrink: 0; }
 .new-matchup-button { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 46px; padding: 10px 0 10px 16px; border: 0; background: transparent; font-size: 13px; font-weight: 600; transition: color .16s; }
 .new-matchup-button:hover { color: var(--accent); }
 .new-matchup-button .icon { width: 17px; height: 17px; }
-.reveal-note { padding-top: 15px; color: var(--muted); font-size: 11px; text-align: center; }
 
 /* Scores and feedback use words and symbols as well as color. */
 .contender-score { display: flex; align-items: baseline; gap: 8px; min-height: 54px; padding: 6px 0; }
@@ -269,15 +266,10 @@ body:has(.auth-dialog[open]) { overflow: hidden; }
 
 @media (max-width: 900px) {
     .page-width { width: calc(100% - 48px); }
-    .game-heading { gap: 24px; }
-    .game-heading h1 { font-size: 50px; }
-    .game-question { font-size: 16px; }
-    .game-intro { max-width: 290px; font-size: 12px; }
     .contender { padding-inline: 26px; }
     .country-name { font-size: 43px; }
     .country-name--long { font-size: 36px; }
     .country-stat + .country-stat { padding-left: 12px; }
-    .draw-hint { display: none; }
     .account-layout { grid-template-columns: 170px minmax(0, 1fr); gap: 20px; }
     .account-stat-grid { grid-template-columns: minmax(0, 1fr); }
     .account-stat + .account-stat { border-left: 0; border-top: 1px solid var(--line); }
@@ -293,24 +285,21 @@ body:has(.auth-dialog[open]) { overflow: hidden; }
     .auth-actions { gap: 3px; }
     .auth-button { padding-inline: 12px; font-size: 12px; gap: 8px; }
     .auth-actions .icon { display: none; }
-    .game-heading { display: block; padding-block: 24px; }
-    .heading-eyebrow { font-size: 9px; margin-bottom: 8px; }
-    .game-heading h1 { font-size: 42px; }
-    .game-heading h1 br { display: none; }
-    .game-heading h1 em { display: inline-block; margin-left: 5px; font-size: .84em; letter-spacing: -1.5px; }
-    .game-intro { max-width: none; margin-top: 16px; font-size: 12px; line-height: 1.6; }
-    .game-question { margin-bottom: 4px; font-size: 15px; }
-    .game-intro > p:nth-child(2) br { display: none; }
-    .game-instruction { margin-top: 4px; }
-    .arena-bar { min-height: 46px; }
+    .game-main { padding-top: 12px; }
+    .arena-bar { min-height: 38px; gap: 12px; }
+    .arena-bar h1 { font-size: 25px; }
+    .game-rules { gap: 6px; padding-bottom: 12px; font-size: 11px; }
+    .rule-points { gap: 5px 12px; }
+    .rule-points > span { gap: 5px; }
+    .rule-points strong { font-size: 11px; }
     .streak-counter { gap: 8px; }
     .streak-number { font-size: 23px; }
     .matchup { grid-template-columns: minmax(0, 1fr); }
-    .contender { padding: 17px 22px 21px; }
-    .contender + .versus + .contender { padding-top: 27px; border-top: 1px solid var(--line); border-left: 0; }
+    .contender { padding: 14px 20px 16px; }
+    .contender + .versus + .contender { padding-top: 23px; border-top: 1px solid var(--line); border-left: 0; }
     .contender-top .eyebrow { font-size: 9px; letter-spacing: 1.3px; }
-    .country-identity { flex-direction: row; justify-content: flex-start; gap: 18px; min-height: 97px; padding: 14px 0; text-align: left; }
-    .country-flag { flex-shrink: 0; font-size: 50px; }
+    .country-identity { flex-direction: row; justify-content: flex-start; gap: 16px; min-height: 80px; padding: 10px 0; text-align: left; }
+    .country-flag { flex-shrink: 0; font-size: 44px; }
     .country-name { font-size: 35px; line-height: 1.02; letter-spacing: -.7px; }
     .country-name--long { font-size: 31px; }
     .country-stats { padding-block: 12px; margin-bottom: 13px; }
@@ -328,8 +317,6 @@ body:has(.auth-dialog[open]) { overflow: hidden; }
     .round-footer { gap: 12px; min-height: 80px; padding-block: 16px; }
     .draw-button { padding-inline: 14px; font-size: 12px; }
     .new-matchup-button { padding-left: 5px; font-size: 12px; gap: 7px; }
-    .reveal-note { padding-top: 12px; font-size: 10px; }
-    .arena { padding-bottom: 26px; }
     .contender-score { min-height: 42px; }
     .score-number { font-size: 36px; }
     .round-footer--answered { flex-wrap: wrap; gap: 18px; }
@@ -364,7 +351,6 @@ body:has(.auth-dialog[open]) { overflow: hidden; }
 }
 @media (max-width: 360px) {
     .brand-mark { display: none; }
-    .game-heading h1 { font-size: 38px; }
     .contender { padding-inline: 16px; }
     .country-identity { gap: 13px; }
     .country-name { font-size: 31px; }
