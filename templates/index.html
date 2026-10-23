@@ -1,43 +1,4 @@
 {% import '_components.html' as ui with context %}
-{% set round_answered = data or session.get('answered', False) %}
-
-{% macro contender(country, flag, choice, number, opponent) -%}
-{% set picked = data and request.form.get('guess') == choice %}
-{% set winner = data and data[country]['Points'] > data[opponent]['Points'] %}
-<article class="contender{% if winner %} contender--winner{% endif %}{% if picked %} contender--picked{% endif %}" aria-labelledby="country-{{ number }}">
-    <div class="contender-top">
-        <span class="eyebrow">Contender {{ number }}</span>
-        {% if data %}
-        <span class="round-standing">{% if winner %}Round winner{% elif data[country]['Points'] == data[opponent]['Points'] %}Draw{% else %}Runner-up{% endif %}</span>
-        {% endif %}
-    </div>
-    <div class="country-identity">
-        <span class="country-flag" role="img" aria-label="Flag of {{ country }}">{{ flag }}</span>
-        <h2 class="country-name{% if country|length > 24 %} country-name--long{% endif %}" id="country-{{ number }}">{{ country }}</h2>
-    </div>
-    <dl class="country-stats">
-        <div class="country-stat">
-            <dt>Population</dt>
-            <dd>{% if data %}{{ '{:,}'.format(data[country]['Population']) }}{% else %}<span class="hidden-stat" aria-label="Hidden until you answer">—</span>{% endif %}</dd>
-        </div>
-        <div class="country-stat">
-            <dt>Area <span class="stat-unit">/ km²</span></dt>
-            <dd>{% if data %}{{ '{:,}'.format(data[country]['Area(km)']) }}{% else %}<span class="hidden-stat" aria-label="Hidden until you answer">—</span>{% endif %}</dd>
-        </div>
-    </dl>
-    {% if data %}
-    <div class="contender-score" aria-label="{{ country }}: {{ data[country]['Points'] }} {{ 'point' if data[country]['Points'] == 1 else 'points' }}">
-        <span class="score-number">{{ data[country]['Points'] }}</span>
-        <span class="score-label">{{ 'point' if data[country]['Points'] == 1 else 'points' }}</span>
-        {% if picked %}<span class="your-pick">{{ ui.icon('check') }} Your pick</span>{% endif %}
-    </div>
-    {% else %}
-    <button class="country-choice" type="submit" name="guess" value="{{ choice }}" aria-label="Choose {{ country }} to win">
-        <span>Choose {{ country }}</span>{{ ui.icon('arrow') }}
-    </button>
-    {% endif %}
-</article>
-{%- endmacro %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -52,56 +13,13 @@
     <link rel="preload" href="{{ url_for('static', filename='fonts/arena-sans.woff2') }}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="{{ url_for('static', filename='auth.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='game.js') }}" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#arena">Skip to the game</a>
     {{ ui.header() }}
     <main class="game-main page-width">
-        <section class="arena{% if data %} arena--answered{% endif %}" id="arena" aria-labelledby="page-title" tabindex="-1">
-            <div class="arena-bar">
-                <h1 id="page-title">{% if data %}The final score{% else %}Pick the winner{% endif %}</h1>
-                <div class="streak-counter" role="status" aria-label="Current streak: {{ streak }} correct {{ 'guess' if streak == 1 else 'guesses' }} in a row">
-                    <span class="streak-label">Current streak</span><span class="streak-number">{{ streak }}</span>
-                </div>
-            </div>
-            <div class="game-rules" aria-label="Scoring rules">
-                <p class="rule-points">
-                    <span>Larger population <strong>+1 point</strong></span>
-                    <span>Larger area <strong>+1 point</strong></span>
-                </p>
-                <p class="rule-examples"><span><strong>2–0?</strong> Pick that country.</span><span><strong>Equal points?</strong> Pick a draw (e.g. 1–1).</span></p>
-            </div>
-            {% if data %}
-            <div class="result-message {{ 'result-message--correct' if is_correct else 'result-message--incorrect' }}" role="status">
-                <span class="result-icon">{{ ui.icon('check' if is_correct else 'close') }}</span>
-                <div>
-                    <h2>{{ 'Correct call.' if is_correct else 'Incorrect call.' }}</h2>
-                    <p>{% if data[country_1]['Points'] == data[country_2]['Points'] %}A draw. {{ data[country_1]['Points'] }} {{ 'point' if data[country_1]['Points'] == 1 else 'points' }} each.{% elif data[country_1]['Points'] > data[country_2]['Points'] %}{{ country_1 }} wins, {{ data[country_1]['Points'] }}–{{ data[country_2]['Points'] }}.{% else %}{{ country_2 }} wins, {{ data[country_2]['Points'] }}–{{ data[country_1]['Points'] }}.{% endif %}{% if request.form.get('guess') == 'draw' %} You picked a draw.{% endif %}</p>
-                </div>
-            </div>
-            {% endif %}
-            <form id="guess-form" class="guess-form" method="post" action="{{ url_for('index') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="country1" value="{{ country_1 }}">
-                <input type="hidden" name="country2" value="{{ country_2 }}">
-                <div class="matchup">
-                    {{ contender(country_1, country_1_flag, 'country1', '01', country_2) }}
-                    <span class="versus" aria-label="versus">VS</span>
-                    {{ contender(country_2, country_2_flag, 'country2', '02', country_1) }}
-                </div>
-            </form>
-            <div class="round-footer{% if round_answered %} round-footer--answered{% endif %}">
-                {% if not round_answered %}
-                <div class="draw-choice">
-                    <button class="draw-button" type="submit" form="guess-form" name="guess" value="draw">{{ ui.icon('equal') }} Pick a draw</button>
-                </div>
-                {% else %}
-                <form class="new-matchup-form" method="get" action="{{ url_for('index') }}">
-                    <button class="new-matchup-button new-matchup-button--next" type="submit">{{ ui.icon('shuffle') }} New matchup {{ ui.icon('arrow') }}</button>
-                </form>
-                {% endif %}
-            </div>
-        </section>
+        {% include '_arena.html' %}
     </main>
     <footer class="site-footer page-width">
         <span>Country Battle Royale</span><span>v0.1.0 · Public Beta</span>

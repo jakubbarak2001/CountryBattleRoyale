@@ -59,10 +59,8 @@ def index():
             else:
                 session["round_id"] = create_round(guest_id=session["guest_id"])
 
-        return render_template(
-            "index.html",
-            **get_game_context(),
-        )
+        template = "_arena.html" if request.headers.get("X-Requested-With") == "fetch" else "index.html"
+        return render_template(template, **get_game_context())
 
     if request.method == "POST":
         if "current_countries" not in session or "round_id" not in session:
@@ -98,16 +96,9 @@ def index():
         session["streak"] = streak
         session["answered"] = True
 
-        return render_template(
-            "index.html",
-            data=country_comparison,
-            is_correct=is_correct,
-            streak=session.get("streak", 0),
-            country_1=country_1,
-            country_2=country_2,
-            country_1_flag=country_comparison[country_1]["Flag"],
-            country_2_flag=country_comparison[country_2]["Flag"]
-        )
+        game_context = get_game_context()
+        game_context.update(data=country_comparison, is_correct=is_correct)
+        return render_template("_arena.html", **game_context)
 
 @app.route("/register", methods=["POST"])
 @limiter.limit("10 per hour")
