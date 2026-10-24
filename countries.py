@@ -1,6 +1,9 @@
 import json
 import time
-from random import choice, sample
+from functools import lru_cache
+from pathlib import Path
+from random import sample
+from tempfile import NamedTemporaryFile
 
 import requests
 import os
@@ -10,27 +13,58 @@ load_dotenv()
 
 api_key = os.getenv("MY_SECRET_KEY")
 
+
+@lru_cache(maxsize=1)
+def _read_country_cache(path, modified_ns, size, inode):
+    """Reuse one indexed snapshot until the file changes, in each worker."""
+    with open(path, "r", encoding="utf-8") as file:
+        data = json.load(file)
+    return data["timestamp"], {
+        country["names"]["common"].casefold(): country
+        for country in data["countries"]
+    }
+
+
+def _cached_countries():
+    path = Path("countries.json").resolve()
+    stat = path.stat()
+    return _read_country_cache(str(path), stat.st_mtime_ns, stat.st_size, stat.st_ino)
+
+
+def _country_catalog():
+    try:
+        timestamp, countries = _cached_countries()
+    except FileNotFoundError:
+        refresh_country_cache()
+        timestamp, countries = _cached_countries()
+
+    if time.time() - timestamp > 604800:
+        refresh_country_cache()
+        _, countries = _cached_countries()
+    return countries
+
+
+def _country_details(country, catalog):
+    try:
+        data = catalog[country.casefold()]
+    except KeyError:
+        raise ValueError("This country was not found.") from None
+    return {
+        "Name": data["names"]["common"],
+        "Population": data["population"],
+        "Area(km)": data["area"]["kilometers"],
+        "Flag": data["flag"]["emoji"],
+    }
+
+
 #CORE GAME LOGIC
 def get_one_country(country):
-    if not os.path.exists("countries.json") or is_country_cache_expired():
-        refresh_country_cache()
-
-    with open("countries.json", "r", encoding="utf-8") as file:
-        data = json.load(file)
-        for country_data in data["countries"]:
-            if country_data["names"]["common"].lower() == country.lower():
-                return {
-                    "Name": country_data["names"]["common"],
-                    "Population": country_data["population"],
-                    "Area(km)": country_data["area"]["kilometers"],
-                    "Flag": country_data["flag"]["emoji"]
-                }
-
-    raise ValueError("This country was not found.")
+    return _country_details(country, _country_catalog())
 
 
 def get_country_data(country1, country2):
-    return get_one_country(country1), get_one_country(country2)
+    catalog = _country_catalog()
+    return _country_details(country1, catalog), _country_details(country2, catalog)
 
 
 def compare_two_countries(country1, country2):
@@ -59,17 +93,7 @@ def compare_two_countries(country1, country2):
 
 
 def select_and_compare_random_countries():
-    if not os.path.exists("countries.json") or is_country_cache_expired():
-        refresh_country_cache()
-
-    with open("countries.json", "r", encoding="UTF-8") as file:
-        country_data = json.load(file)
-
-    country_names = [
-        country["names"]["common"]
-        for country in country_data["countries"]
-    ]
-
+    country_names = list(_country_catalog())
     country1, country2 = sample(country_names, 2)
 
     return compare_two_countries(country1, country2)
@@ -100,20 +124,24 @@ def refresh_country_cache():
     countries = response1.json()["data"]["objects"] + response2.json()["data"]["objects"] + response3.json()["data"]["objects"]
     countries_timestamp = {"timestamp": timestamp, "countries": countries}
 
-    with open("countries.json", "w", encoding="utf-8") as file:
-        json.dump(countries_timestamp, file, indent=2)
+    # Other workers must see either complete snapshot, never a partial write.
+    path = Path("countries.json").resolve()
+    temporary_path = None
+    try:
+        with NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
+                                prefix=".countries-", suffix=".json", delete=False) as file:
+            temporary_path = Path(file.name)
+            json.dump(countries_timestamp, file, indent=2)
+        os.replace(temporary_path, path)
+        _read_country_cache.cache_clear()
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
 
 def is_country_cache_expired():
-    with open("countries.json", "r") as file:
-        old = False
-        data = json.load(file)
-        timestamp = data['timestamp']
-        current_time = time.time()
-        one_week_seconds = 604800
-        if current_time - timestamp > one_week_seconds:
-            old = True
-        return old
+    timestamp, _ = _cached_countries()
+    return time.time() - timestamp > 604800
 
 if __name__ == "__main__":
     def ask_for_country():

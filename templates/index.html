@@ -19,10 +19,19 @@
     <a class="skip-link" href="#arena">Skip to the game</a>
     {{ ui.header() }}
     <main class="game-main page-width">
+        <p class="sr-only" id="game-status" role="status" aria-atomic="true"></p>
+        <div class="game-error" id="game-error" role="alert" hidden>
+            <p id="game-error-message"></p>
+            <form class="new-matchup-form" method="get" action="{{ url_for('index', new_matchup='1') }}">
+                <button class="new-matchup-button" type="submit">Load a new matchup {{ ui.icon('arrow') }}</button>
+            </form>
+        </div>
         {% include '_arena.html' %}
     </main>
     <footer class="site-footer page-width">
-        <span>Country Battle Royale</span><span>v0.1.0 · Public Beta</span>
+        <span>Country Battle Royale</span>
+        <button class="sound-toggle" id="sound-toggle" type="button" aria-label="Sound effects" aria-pressed="false" hidden>{{ ui.icon('sound') }} <span aria-hidden="true">Sound off</span></button>
+        <span>v0.1.0 · Public Beta</span>
     </footer>
     {% include '_auth-dialogs.html' %}
 </body>

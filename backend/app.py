@@ -27,9 +27,10 @@ limiter = Limiter(
     strategy="moving-window",
 )
 
-def get_game_context():
+def get_game_context(country_comparison=None):
     country_1, country_2 = session["current_countries"]
-    country_comparison = compare_two_countries(country_1, country_2)
+    if country_comparison is None:
+        country_comparison = compare_two_countries(country_1, country_2)
 
     return {
         "country_1": country_1,
@@ -45,9 +46,11 @@ def index():
 
     if request.method == "GET":
         session.permanent = True
+        country_comparison = None
 
         if ("current_countries" not in session or "round_id" not in session
-                or session.get("answered", False)):
+                or session.get("answered", False)
+                or request.args.get("new_matchup") == "1"):
             country_comparison = select_and_compare_random_countries()
             session["current_countries"] = list(country_comparison.keys())
             session["answered"] = False
@@ -60,7 +63,7 @@ def index():
                 session["round_id"] = create_round(guest_id=session["guest_id"])
 
         template = "_arena.html" if request.headers.get("X-Requested-With") == "fetch" else "index.html"
-        return render_template(template, **get_game_context())
+        return render_template(template, **get_game_context(country_comparison))
 
     if request.method == "POST":
         if "current_countries" not in session or "round_id" not in session:
@@ -96,7 +99,7 @@ def index():
         session["streak"] = streak
         session["answered"] = True
 
-        game_context = get_game_context()
+        game_context = get_game_context(country_comparison)
         game_context.update(data=country_comparison, is_correct=is_correct)
         return render_template("_arena.html", **game_context)
 

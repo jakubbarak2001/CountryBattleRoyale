@@ -4,11 +4,12 @@
 {% macro contender(country, flag, choice, number, opponent) -%}
 {% set picked = data and request.form.get('guess') == choice %}
 {% set winner = data and data[country]['Points'] > data[opponent]['Points'] %}
-<article class="contender{% if winner %} contender--winner{% endif %}{% if picked %} contender--picked{% endif %}" aria-labelledby="country-{{ number }}">
+{% set tied = data and data[country]['Points'] == data[opponent]['Points'] %}
+<article class="contender{% if winner %} contender--winner{% endif %}{% if tied %} contender--draw{% endif %}{% if picked %} contender--picked{% endif %}" aria-labelledby="country-{{ number }}">
     <div class="contender-top">
         <span class="eyebrow">Contender {{ number }}</span>
         {% if data %}
-        <span class="round-standing">{% if winner %}Round winner{% elif data[country]['Points'] == data[opponent]['Points'] %}Draw{% else %}Runner-up{% endif %}</span>
+        <span class="round-standing">{% if winner %}Round winner{% elif tied %}Draw{% else %}Runner-up{% endif %}</span>
         {% endif %}
     </div>
     <div class="country-identity">
@@ -39,29 +40,17 @@
 </article>
 {%- endmacro %}
 
-<section class="arena{% if data %} arena--answered{% endif %}" id="arena" aria-labelledby="page-title" tabindex="-1">
+<section class="arena{% if data %} arena--answered{% endif %}" id="arena" aria-labelledby="page-title" tabindex="-1" data-streak="{{ streak }}"{% if data %} data-result="{{ 'correct' if is_correct else 'incorrect' }}"{% endif %}>
             <div class="arena-bar">
                 <h1 id="page-title">{% if data %}The final score{% else %}Pick the winner{% endif %}</h1>
-                <div class="streak-counter" role="status" aria-label="Current streak: {{ streak }} correct {{ 'guess' if streak == 1 else 'guesses' }} in a row">
+                <div class="streak-counter" aria-label="Current streak: {{ streak }} correct {{ 'guess' if streak == 1 else 'guesses' }} in a row">
                     <span class="streak-label">Current streak</span><span class="streak-number">{{ streak }}</span>
                 </div>
             </div>
-            <div class="game-rules" aria-label="Scoring rules">
-                <p class="rule-points">
-                    <span>Larger population <strong>+1 point</strong></span>
-                    <span>Larger area <strong>+1 point</strong></span>
-                </p>
-                <p class="rule-examples"><span><strong>2–0?</strong> Pick that country.</span><span><strong>Equal points?</strong> Pick a draw (e.g. 1–1).</span></p>
+            <div class="game-rules" role="group" aria-label="Scoring rules">
+                <span class="rule-item">{{ ui.icon('people') }} More people <span class="rule-point">+1<span class="sr-only"> point</span></span></span>
+                <span class="rule-item">{{ ui.icon('area') }} More land <span class="rule-point">+1<span class="sr-only"> point</span></span></span>
             </div>
-            {% if data %}
-            <div class="result-message {{ 'result-message--correct' if is_correct else 'result-message--incorrect' }}" role="status">
-                <span class="result-icon">{{ ui.icon('check' if is_correct else 'close') }}</span>
-                <div>
-                    <h2>{{ 'Correct call.' if is_correct else 'Incorrect call.' }}</h2>
-                    <p>{% if data[country_1]['Points'] == data[country_2]['Points'] %}A draw. {{ data[country_1]['Points'] }} {{ 'point' if data[country_1]['Points'] == 1 else 'points' }} each.{% elif data[country_1]['Points'] > data[country_2]['Points'] %}{{ country_1 }} wins, {{ data[country_1]['Points'] }}–{{ data[country_2]['Points'] }}.{% else %}{{ country_2 }} wins, {{ data[country_2]['Points'] }}–{{ data[country_1]['Points'] }}.{% endif %}{% if request.form.get('guess') == 'draw' %} You picked a draw.{% endif %}</p>
-                </div>
-            </div>
-            {% endif %}
             <form id="guess-form" class="guess-form" method="post" action="{{ url_for('index') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="country1" value="{{ country_1 }}">
@@ -75,9 +64,19 @@
             <div class="round-footer{% if round_answered %} round-footer--answered{% endif %}">
                 {% if not round_answered %}
                 <div class="draw-choice">
+                    <span class="draw-hint">Equal points?</span>
                     <button class="draw-button" type="submit" form="guess-form" name="guess" value="draw">{{ ui.icon('equal') }} Pick a draw</button>
                 </div>
                 {% else %}
+                {% if data %}
+                <div class="result-message {{ 'result-message--correct' if is_correct else 'result-message--incorrect' }}">
+                    <span class="result-icon">{{ ui.icon('check' if is_correct else 'close') }}</span>
+                    <div>
+                        <h2>{{ 'Correct call.' if is_correct else 'Incorrect call.' }}</h2>
+                        <p>{% if data[country_1]['Points'] == data[country_2]['Points'] %}A draw. {{ data[country_1]['Points'] }} {{ 'point' if data[country_1]['Points'] == 1 else 'points' }} each.{% elif data[country_1]['Points'] > data[country_2]['Points'] %}{{ country_1 }} wins, {{ data[country_1]['Points'] }}–{{ data[country_2]['Points'] }}.{% else %}{{ country_2 }} wins, {{ data[country_2]['Points'] }}–{{ data[country_1]['Points'] }}.{% endif %}{% if request.form.get('guess') == 'draw' %} You picked a draw.{% endif %}</p>
+                    </div>
+                </div>
+                {% endif %}
                 <form class="new-matchup-form" method="get" action="{{ url_for('index') }}">
                     <button class="new-matchup-button new-matchup-button--next" type="submit">{{ ui.icon('shuffle') }} New matchup {{ ui.icon('arrow') }}</button>
                 </form>

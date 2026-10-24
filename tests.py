@@ -91,6 +91,29 @@ class AuthenticationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Register", response.get_data(as_text=True))
 
+    @patch("backend.app.select_and_compare_random_countries")
+    @patch("backend.app.compare_two_countries")
+    def test_recovery_can_replace_an_unanswered_round(self, mock_compare, mock_select):
+        mock_select.return_value = {
+            "Japan": {"Flag": "JP"},
+            "Germany": {"Flag": "DE"},
+        }
+        client = app.test_client()
+        with client.session_transaction() as saved_session:
+            saved_session.update(current_countries=["France", "Spain"],
+                                 round_id=100, guest_id="guest", answered=False, streak=3)
+        response = client.get("/?new_matchup=1", headers={"X-Requested-With": "fetch"})
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("<!DOCTYPE html>", response.get_data(as_text=True))
+        mock_select.assert_called_once_with()
+        mock_compare.assert_not_called()
+        self.mock_create_round.assert_called_once_with(guest_id="guest")
+        self.mock_complete_round.assert_not_called()
+        with client.session_transaction() as saved_session:
+            self.assertEqual(saved_session["round_id"], 101)
+            self.assertEqual(saved_session["current_countries"], ["Japan", "Germany"])
+            self.assertEqual(saved_session["streak"], 3)
+
     @patch("backend.app.create_user", side_effect=UniqueViolation)
     def test_existing_credentials_cause_unique_violation(self, mock_create_user):
         client = app.test_client()
