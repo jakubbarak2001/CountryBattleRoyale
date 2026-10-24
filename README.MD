@@ -16,6 +16,9 @@ A geography game: two countries, one call. Pick the winner on population and are
 - **Compare:** larger population and larger area each earn one point. Pick the winner or a draw.
 - **Reveal:** statistics stay hidden until you answer. Correct guesses build your streak.
 - **Return:** play as a guest, or register to save rounds played, wins, and your best streak.
+- **Sound:** enable the sound control in the footer for quiet selection and result cues. Your choice is remembered on this browser; sound starts off.
+
+Round reveals use short, staggered animations and respect your device's reduced-motion setting. Country data is indexed in memory in each server worker and reloaded when its cache file changes.
 
 ## Architecture
 
