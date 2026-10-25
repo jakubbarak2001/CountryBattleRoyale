@@ -183,7 +183,8 @@
         // form.elements also includes the draw button outside the form's DOM subtree.
         const buttons = Array.from(form.elements).filter((element) => element.tagName === 'BUTTON');
         const body = kind === 'guess' ? new FormData(form) : null;
-        if (body) body.set('guess', submitter.value);
+        if (body) body.set('guess',
+            submitter.value);
         buttons.forEach((button) => { button.disabled = true; });
         arena.setAttribute('aria-busy', 'true');
         arena.dataset.phase = kind === 'guess' ? 'submitting' : 'loading';
