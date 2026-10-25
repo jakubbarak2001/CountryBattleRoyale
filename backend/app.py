@@ -202,15 +202,21 @@ def logout():
     return redirect("/")
 
 
-def render_account(section: str = "account", rounds_played=None, rounds_won=None, best_streak=None):
+def render_account(section: str = "account", rounds_played=None, rounds_won=None, best_streak=None,
+                   rounds_lost=None, precision=None, current_streak=None):
 
     if session.get("logged", False) and session.get("username"):
-        return render_template("account.html",
-                               name = session["username"],
-                               section=section,
-                               rounds_played=rounds_played,
-                               rounds_won=rounds_won,
-                               best_streak=best_streak)
+        return render_template(
+            "account.html",
+            name=session["username"],
+            section=section,
+            rounds_played=rounds_played,
+            rounds_won=rounds_won,
+            rounds_lost=rounds_lost,
+            precision=precision,
+            current_streak=current_streak,
+            best_streak=best_streak,
+        )
 
     else:
         return redirect("/")
@@ -226,10 +232,24 @@ def stats():
         rounds = read_rounds_played(session["username"])
         rounds_won = read_rounds_won(session["username"])
         best_streak = read_best_streak(session["username"])
-        return render_account("stats",
-                              rounds_played=rounds,
-                              rounds_won=rounds_won,
-                              best_streak=best_streak)
+        rounds_lost = None
+        precision = None
+
+        if rounds is not None and rounds_won is not None:
+            rounds_lost = rounds - rounds_won
+            if rounds > 0:
+                precision = (rounds_won / rounds) * 100 if rounds > 0 else 0.0
+
+        return render_account(
+            "stats",
+            rounds_played=rounds,
+            rounds_won=rounds_won,
+            rounds_lost=rounds_lost,
+            precision=precision,
+            current_streak=session.get("streak", 0),
+            best_streak=best_streak,
+        )
+
     else:
         return redirect("/")
 

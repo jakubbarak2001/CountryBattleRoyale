@@ -33,7 +33,6 @@
             <section class="account-content" id="account-content" aria-labelledby="section-title" tabindex="-1">
                 {% if current_section == 'account' %}
                 <div class="account-section-heading">
-                    <p class="eyebrow">Your corner of the arena</p>
                     <h2 id="section-title">Welcome back, <em>{{ name }}.</em></h2>
                     <p>Your game is waiting. Explore your account and what's coming next.</p>
                 </div>
@@ -52,7 +51,6 @@
                 </div>
                 {% elif current_section == 'stats' %}
                 <div class="account-section-heading">
-                    <p class="eyebrow">Your record</p>
                     <h2 id="section-title">Every round counts<span class="brand-period">.</span></h2>
                     <p>Your completed rounds, wins, and best streak, at a glance.</p>
                 </div>
@@ -66,6 +64,18 @@
                         <dd>{% if rounds_won is defined and rounds_won is not none %}{{ '{:,}'.format(rounds_won) }}{% else %}<span aria-hidden="true">&mdash;</span><span class="account-coming-soon">Unavailable</span>{% endif %}</dd>
                     </div>
                     <div class="account-stat">
+                        <dt>Rounds lost</dt>
+                        <dd>{% if rounds_lost is defined and rounds_lost is not none %}{{ '{:,}'.format(rounds_lost) }}{% else %}<span aria-hidden="true">&mdash;</span><span class="account-coming-soon">Unavailable</span>{% endif %}</dd>
+                    </div>
+                    <div class="account-stat">
+                        <dt>Precision</dt>
+                        <dd>{% if precision is defined and precision is not none %}{{ '{:.1f}%'.format(precision) }}{% else %}<span aria-hidden="true">&mdash;</span><span class="account-coming-soon">Unavailable</span>{% endif %}</dd>
+                    </div>
+                    <div class="account-stat">
+                        <dt>Current streak</dt>
+                        <dd>{% if current_streak is defined and current_streak is not none %}{{ '{:,}'.format(current_streak) }}{% else %}<span aria-hidden="true">&mdash;</span><span class="account-coming-soon">Unavailable</span>{% endif %}</dd>
+                    </div>
+                    <div class="account-stat">
                         <dt>Best streak</dt>
                         <dd>{% if best_streak is defined and best_streak is not none %}{{ '{:,}'.format(best_streak) }}{% else %}<span aria-hidden="true">&mdash;</span><span class="account-coming-soon">Unavailable</span>{% endif %}</dd>
                     </div>
@@ -76,12 +86,20 @@
                 {% if rounds_won is not defined or rounds_won is none %}
                 <p class="account-footnote">Rounds won couldn't be loaded. Try again later.</p>
                 {% endif %}
+                {% if rounds_lost is not defined or rounds_lost is none %}
+                <p class="account-footnote">Rounds lost couldn't be loaded. Try again later.</p>
+                {% endif %}
+                {% if precision is not defined or precision is none %}
+                <p class="account-footnote">Precision couldn't be loaded. Try again later.</p>
+                {% endif %}
+                {% if current_streak is not defined or current_streak is none %}
+                <p class="account-footnote">Current streak couldn't be loaded. Try again later.</p>
+                {% endif %}
                 {% if best_streak is not defined or best_streak is none %}
                 <p class="account-footnote">Best streak couldn't be loaded. Try again later.</p>
                 {% endif %}
                 {% elif current_section == 'achievements' %}
                 <div class="account-section-heading">
-                    <p class="eyebrow">Your milestones</p>
                     <h2 id="section-title">Make your mark<span class="brand-period">.</span></h2>
                     <p>A place for your future achievements.</p>
                 </div>
@@ -93,7 +111,6 @@
                 </div>
                 {% elif current_section == 'settings' %}
                 <div class="account-section-heading">
-                    <p class="eyebrow">Your preferences</p>
                     <h2 id="section-title">Make it yours<span class="brand-period">.</span></h2>
                     <p>Your account and game preferences will live here.</p>
                 </div>

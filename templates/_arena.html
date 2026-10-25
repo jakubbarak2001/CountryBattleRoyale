@@ -64,8 +64,7 @@
             <div class="round-footer{% if round_answered %} round-footer--answered{% endif %}">
                 {% if not round_answered %}
                 <div class="draw-choice">
-                    <span class="draw-hint">Equal points?</span>
-                    <button class="draw-button" type="submit" form="guess-form" name="guess" value="draw">{{ ui.icon('equal') }} Pick a draw</button>
+                    <button class="draw-button" type="submit" form="guess-form" name="guess" value="draw">{{ ui.icon('equal') }} Equal points ? - Pick a draw</button>
                 </div>
                 {% else %}
                 {% if data %}
@@ -78,7 +77,7 @@
                 </div>
                 {% endif %}
                 <form class="new-matchup-form" method="get" action="{{ url_for('index') }}">
-                    <button class="new-matchup-button new-matchup-button--next" type="submit">{{ ui.icon('shuffle') }} New matchup {{ ui.icon('arrow') }}</button>
+                    <button class="new-matchup-button new-matchup-button--next" type="submit">{{ ui.icon('shuffle') }} New round {{ ui.icon('arrow') }}</button>
                 </form>
                 {% endif %}
             </div>
