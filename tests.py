@@ -2,6 +2,7 @@ from http.client import responses
 from unittest import TestCase
 from unittest.mock import patch
 from uuid import uuid4
+from datetime import datetime, timedelta, timezone
 
 from flask import session
 from flask_wtf.csrf import generate_csrf
@@ -45,6 +46,10 @@ class AuthenticationTests(TestCase):
         self.mock_complete_round = self.enterContext(
             patch("backend.app.complete_round", return_value=True)
         )
+        self.mock_read_round_status = self.enterContext(
+            patch("backend.app.read_round_status",
+                  return_value=(False, datetime.now(timezone.utc)))
+        )
 
     def csrf_token(self, client):
         # Give the test browser a token and its matching session value.
@@ -53,6 +58,60 @@ class AuthenticationTests(TestCase):
             with client.session_transaction() as saved_session:
                 saved_session["csrf_token"] = session["csrf_token"]
         return token
+
+    @patch("backend.app.select_and_compare_random_countries")
+    @patch("backend.app.compare_two_countries")
+    def test_database_status_controls_round_replacement(self, mock_compare, mock_select):
+        countries = {"Japan": {"Flag": "JP"}, "Germany": {"Flag": "DE"}}
+        mock_compare.return_value = countries
+        mock_select.return_value = countries
+        now = datetime.now(timezone.utc)
+        cases = [
+            ("missing", None, True),
+            ("completed", (True, now), True),
+            ("expired", (False, now - timedelta(hours=25)), True),
+            ("expiration boundary", (False, now - timedelta(hours=24)), True),
+            ("active", (False, now - timedelta(hours=23)), False),
+        ]
+        with patch("backend.app.datetime") as clock:
+            clock.now.return_value = now
+            for name, status, should_replace in cases:
+                with self.subTest(name=name):
+                    self.mock_read_round_status.return_value = status
+                    self.mock_create_round.reset_mock()
+                    mock_select.reset_mock()
+                    client = app.test_client()
+                    with client.session_transaction() as saved:
+                        saved.update(round_id=100, guest_id="guest", answered=False,
+                                     current_countries=["Japan", "Germany"])
+                    self.assertEqual(client.get("/").status_code, 200)
+                    self.assertEqual(self.mock_create_round.call_count, int(should_replace))
+                    self.assertEqual(mock_select.call_count, int(should_replace))
+                    with client.session_transaction() as saved:
+                        self.assertEqual(saved["round_id"], 101 if should_replace else 100)
+
+    @patch("backend.app.select_and_compare_random_countries")
+    @patch("backend.app.compare_two_countries")
+    def test_round_limit_prevents_writes_and_preserves_current_matchup(self, mock_compare, mock_select):
+        countries = {"Japan": {"Flag": "JP"}, "Germany": {"Flag": "DE"}}
+        mock_select.return_value = countries
+        mock_compare.return_value = countries
+        client = app.test_client()
+        for _ in range(60):
+            self.assertEqual(client.get("/?new_matchup=1").status_code, 200)
+        with client.session_transaction() as saved:
+            original = dict(saved)
+        self.assertEqual(client.get("/?new_matchup=1").status_code, 429)
+        self.assertEqual(self.mock_create_round.call_count, 60)
+        self.assertEqual(mock_select.call_count, 60)
+        with client.session_transaction() as saved:
+            self.assertEqual(dict(saved), original)
+        self.assertEqual(client.get("/").status_code, 200)
+        self.assertEqual(self.mock_create_round.call_count, 60)
+        self.assertEqual(app.test_client().get("/").status_code, 429)
+        self.assertEqual(client.get("/?new_matchup=1", environ_overrides={
+            "REMOTE_ADDR": "203.0.113.20",
+        }).status_code, 200)
 
     @patch("backend.app.create_user", return_value=1)
     def test_successful_registration(self, mock_create_user):
