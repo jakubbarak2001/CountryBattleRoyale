@@ -133,6 +133,7 @@ def complete_round(round_id, *, user_id=None, guest_id=None, is_correct=False, s
             cur.execute(
                 "UPDATE rounds SET completed = TRUE "
                 "WHERE round_id = %s AND completed = FALSE "
+                "AND created_at > CURRENT_TIMESTAMP - INTERVAL '24 hours' "
                 "AND (user_id = %s OR (user_id IS NULL AND guest_id = %s)) "
                 "RETURNING round_id",
                 (round_id, user_id, guest_id),
@@ -161,7 +162,35 @@ def create_round(user_id=None, guest_id=None):
 
     with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
         with conn.cursor() as cur:
-            cur.execute("INSERT INTO rounds (user_id, guest_id) VALUES (%s, %s) RETURNING round_id",
+            cur.execute("INSERT INTO rounds (user_id, guest_id) "
+                        "VALUES (%s, %s) RETURNING round_id",
                         (user_id, guest_id,))
 
             return cur.fetchone()[0]
+
+
+def delete_unanswered_round():
+    """Delete unanswered rounds at least 24 hours old and return their count."""
+    with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM rounds "
+                "WHERE completed = FALSE "
+                "AND created_at <= CURRENT_TIMESTAMP - INTERVAL '24 hours'"
+            )
+
+            return cur.rowcount
+
+def read_round_status(round_id):
+    """Return (completed, created_at), or None if the round is missing."""
+    with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT completed, created_at
+                FROM rounds
+                WHERE round_id = %s
+                """,
+                (round_id,),
+            )
+            return cur.fetchone()

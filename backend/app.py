@@ -2,6 +2,7 @@ import re
 from secrets import token_urlsafe
 
 import psycopg.errors
+from datetime import datetime, timedelta, timezone
 from email_validator import validate_email, EmailNotValidError
 from flask import Flask, render_template, request, session, jsonify
 from flask_limiter import Limiter
@@ -12,7 +13,7 @@ from dotenv import load_dotenv
 from werkzeug.utils import redirect
 
 from backend.db import create_user, login_user, read_rounds_played, \
-    read_rounds_won, read_best_streak, create_round, complete_round
+    read_rounds_won, read_best_streak, create_round, complete_round, read_round_status
 from countries import compare_two_countries, select_and_compare_random_countries
 
 load_dotenv()
@@ -45,22 +46,34 @@ def get_game_context(country_comparison=None):
 def index():
 
     if request.method == "GET":
-        session.permanent = True
         country_comparison = None
+        round_status = read_round_status(session["round_id"]) if "round_id" in session else None
+        round_expired = False
+
+        if round_status is not None:
+            created_at = round_status[1]
+            round_expired = datetime.now(timezone.utc) >= created_at + timedelta(hours=24)
 
         if ("current_countries" not in session or "round_id" not in session
+                or round_status is None
+                or round_status[0]
+                or round_expired
                 or session.get("answered", False)
                 or request.args.get("new_matchup") == "1"):
-            country_comparison = select_and_compare_random_countries()
-            session["current_countries"] = list(country_comparison.keys())
-            session["answered"] = False
-            if not session.get("guest_id"):
-                session["guest_id"] = token_urlsafe(32)
 
-            if session.get("logged") and session.get("user_id"):
-                session["round_id"] = create_round(user_id=session["user_id"])
-            else:
-                session["round_id"] = create_round(guest_id=session["guest_id"])
+            with limiter.limit("60 per minute;1500 per hour"):
+                session.permanent = True
+
+                country_comparison = select_and_compare_random_countries()
+                session["current_countries"] = list(country_comparison.keys())
+                session["answered"] = False
+                if not session.get("guest_id"):
+                    session["guest_id"] = token_urlsafe(32)
+
+                if session.get("logged") and session.get("user_id"):
+                    session["round_id"] = create_round(user_id=session["user_id"])
+                else:
+                    session["round_id"] = create_round(guest_id=session["guest_id"])
 
         template = "_arena.html" if request.headers.get("X-Requested-With") == "fetch" else "index.html"
         return render_template(template, **get_game_context(country_comparison))

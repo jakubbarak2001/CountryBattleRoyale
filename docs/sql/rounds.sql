@@ -8,3 +8,5 @@ CREATE TABLE IF NOT EXISTS rounds (
 -- Also support the earlier version of this table created in the GUI.
 ALTER TABLE rounds ALTER COLUMN user_id DROP NOT NULL;
 ALTER TABLE rounds ADD COLUMN IF NOT EXISTS guest_id TEXT;
+-- Existing rows receive the migration timestamp; new rounds are dated on insert.
+ALTER TABLE rounds ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;

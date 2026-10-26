@@ -15,7 +15,7 @@ from flask import session
 from flask_wtf.csrf import generate_csrf
 
 from backend.app import app, limiter
-from backend.db import complete_round, create_round
+from backend.db import complete_round, create_round, delete_unanswered_round, read_round_status
 
 
 @skipUnless(os.environ.get("TEST_DATABASE_URL"), "Set TEST_DATABASE_URL for PostgreSQL replay tests")
@@ -72,6 +72,34 @@ class RoundProtectionTests(TestCase):
         client.set_cookie("session", cookie)
         self.assertEqual(client.post("/", data=data).status_code, 409)
         self.assertEqual(self.stats(), (1, 1, 1))
+
+    def test_expired_round_cannot_award_points_and_is_replaced_on_get(self):
+        client, token = self.browser()
+        with client.session_transaction() as saved:
+            expired_id = saved["round_id"]
+        with psycopg.connect(self.test_dsn) as conn:
+            conn.execute("UPDATE rounds SET created_at = CURRENT_TIMESTAMP - INTERVAL '25 hours' WHERE round_id = %s", (expired_id,))
+        self.assertEqual(client.post("/", data={"guess": "country1", "csrf_token": token}).status_code, 409)
+        self.assertEqual(self.stats(), (0, 0, 0))
+        self.assertFalse(read_round_status(expired_id)[0])
+        self.assertEqual(client.get("/").status_code, 200)
+        with client.session_transaction() as saved:
+            self.assertNotEqual(saved["round_id"], expired_id)
+
+    def test_cleanup_preserves_completed_and_recent_rounds(self):
+        expired_id = create_round(guest_id="expired")
+        completed_id = create_round(user_id=1)
+        recent_id = create_round(guest_id="recent")
+        self.assertTrue(complete_round(completed_id, user_id=1, is_correct=True, streak=1))
+        with psycopg.connect(self.test_dsn) as conn:
+            conn.execute("UPDATE rounds SET created_at = CURRENT_TIMESTAMP - INTERVAL '25 hours' WHERE round_id IN (%s, %s)", (expired_id, completed_id))
+        self.assertEqual(delete_unanswered_round(), 1)
+        self.assertIsNone(read_round_status(expired_id))
+        self.assertTrue(read_round_status(completed_id)[0])
+        self.assertFalse(read_round_status(recent_id)[0])
+        self.assertEqual(self.stats(), (1, 1, 1))
+        self.assertFalse(complete_round(expired_id, guest_id="expired"))
+        self.assertEqual(delete_unanswered_round(), 0)
 
     def test_guest_cookie_replay_cannot_count_again(self):
         client, token = self.browser(logged=False)
