@@ -180,7 +180,7 @@
         pending = true;
         const previousStreak = Number(arena.dataset.streak) || 0;
         const focusWasInRound = arena.contains(document.activeElement) || form.contains(document.activeElement);
-        // form.elements also includes the draw button outside the form's DOM subtree.
+        // The action bar buttons belong to this form through their form attribute.
         const buttons = Array.from(form.elements).filter((element) => element.tagName === 'BUTTON');
         const body = kind === 'guess' ? new FormData(form) : null;
         if (body) body.set('guess',
@@ -188,7 +188,10 @@
         buttons.forEach((button) => { button.disabled = true; });
         arena.setAttribute('aria-busy', 'true');
         arena.dataset.phase = kind === 'guess' ? 'submitting' : 'loading';
-        submitter?.closest('.contender')?.classList.add('contender--pending');
+        if (kind === 'guess' && submitter.value !== 'draw') {
+            arena.querySelector(`.contender[data-choice="${submitter.value}"]`)?.classList.add('contender--pending');
+        }
+        submitter?.classList.add('choice--pending');
         errorPanel.hidden = true;
         status.textContent = kind === 'guess' ? 'Checking your call…' : 'Loading the next matchup…';
         sound.play(kind === 'guess' ? 'select' : 'next');
@@ -231,10 +234,14 @@
                     : 'The connection was interrupted. Please try loading a new matchup.'
                 : error.message;
             errorPanel.hidden = false;
-            if (focusWasInRound && document.activeElement === document.body && submitter?.isConnected) {
-                // Re-enable before restoring keyboard focus.
-                submitter.disabled = false;
-                submitter.focus({ preventScroll: true });
+            if (focusWasInRound && (document.activeElement === document.body || arena.contains(document.activeElement))) {
+                errorPanel.querySelector('.new-matchup-button')?.focus({ preventScroll: true });
+            }
+            if (!document.querySelector('dialog[open]')) {
+                const bounds = errorPanel.getBoundingClientRect();
+                if (bounds.top < 0 || bounds.bottom > window.innerHeight) {
+                    errorPanel.scrollIntoView({ behavior: 'auto', block: 'center' });
+                }
             }
         } finally {
             clearTimeout(timeout);
@@ -242,6 +249,7 @@
             arena.removeAttribute('aria-busy');
             delete arena.dataset.phase;
             arena.querySelector('.contender--pending')?.classList.remove('contender--pending');
+            submitter?.classList.remove('choice--pending');
             pending = false;
         }
     }

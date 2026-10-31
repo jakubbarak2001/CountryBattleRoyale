@@ -1,15 +1,31 @@
 {% import '_components.html' as ui with context %}
 {% set round_answered = data or session.get('answered', False) %}
 
+{% macro stat(country, opponent, key, label, icon, unit='') -%}
+{% set earns_point = data and data[country][key] > data[opponent][key] %}
+{% set equal_stat = data and data[country][key] == data[opponent][key] %}
+<div class="country-stat{% if earns_point %} country-stat--point{% endif %}">
+    <dt>{{ ui.icon(icon) }} <span>{{ label }}{% if unit %} <span class="stat-unit">{{ unit }}</span>{% endif %}</span></dt>
+    <dd>
+        {% if data %}
+        <span class="stat-value">{{ '{:,}'.format(data[country][key]) }}</span>
+        {% if earns_point %}<span class="stat-point" aria-label="earns 1 point">+1</span>{% elif equal_stat %}<span class="stat-equal" aria-label="equal {{ label|lower }}, no point awarded">=</span>{% endif %}
+        {% else %}
+        <span class="hidden-stat">{{ ui.icon('lock') }} <span aria-hidden="true">?</span><span class="sr-only">Hidden until you answer</span></span>
+        {% endif %}
+    </dd>
+</div>
+{%- endmacro %}
+
 {% macro contender(country, flag, choice, number, opponent) -%}
 {% set picked = data and request.form.get('guess') == choice %}
 {% set winner = data and data[country]['Points'] > data[opponent]['Points'] %}
 {% set tied = data and data[country]['Points'] == data[opponent]['Points'] %}
-<article class="contender{% if winner %} contender--winner{% endif %}{% if tied %} contender--draw{% endif %}{% if picked %} contender--picked{% endif %}" aria-labelledby="country-{{ number }}">
+<article class="contender{% if winner %} contender--winner{% endif %}{% if tied %} contender--draw{% endif %}{% if picked %} contender--picked{% endif %}" data-choice="{{ choice }}" aria-labelledby="country-{{ number }}">
     <div class="contender-top">
         <span class="eyebrow">Contender {{ number }}</span>
         {% if data %}
-        <span class="round-standing">{% if winner %}Round winner{% elif tied %}Draw{% else %}Runner-up{% endif %}</span>
+        <span class="round-standing">{% if winner %}{{ ui.icon('achievements') }} Winner{% elif tied %}{{ ui.icon('equal') }} Draw{% else %}Runner-up{% endif %}</span>
         {% endif %}
     </div>
     <div class="country-identity">
@@ -17,14 +33,8 @@
         <h2 class="country-name{% if country|length > 24 %} country-name--long{% endif %}" id="country-{{ number }}">{{ country }}</h2>
     </div>
     <dl class="country-stats">
-        <div class="country-stat">
-            <dt>Population</dt>
-            <dd>{% if data %}{{ '{:,}'.format(data[country]['Population']) }}{% else %}<span class="hidden-stat" aria-label="Hidden until you answer">—</span>{% endif %}</dd>
-        </div>
-        <div class="country-stat">
-            <dt>Area <span class="stat-unit">/ km²</span></dt>
-            <dd>{% if data %}{{ '{:,}'.format(data[country]['Area(km)']) }}{% else %}<span class="hidden-stat" aria-label="Hidden until you answer">—</span>{% endif %}</dd>
-        </div>
+        {{ stat(country, opponent, 'Population', 'Population', 'people') }}
+        {{ stat(country, opponent, 'Area(km)', 'Area', 'area', 'km²') }}
     </dl>
     {% if data %}
     <div class="contender-score" aria-label="{{ country }}: {{ data[country]['Points'] }} {{ 'point' if data[country]['Points'] == 1 else 'points' }}">
@@ -32,53 +42,65 @@
         <span class="score-label">{{ 'point' if data[country]['Points'] == 1 else 'points' }}</span>
         {% if picked %}<span class="your-pick">{{ ui.icon('check') }} Your pick</span>{% endif %}
     </div>
-    {% else %}
-    <button class="country-choice" type="submit" name="guess" value="{{ choice }}" aria-label="Choose {{ country }} to win">
-        <span>Choose {{ country }}</span>{{ ui.icon('arrow') }}
-    </button>
     {% endif %}
 </article>
 {%- endmacro %}
 
-<section class="arena{% if data %} arena--answered{% endif %}" id="arena" aria-labelledby="page-title" tabindex="-1" data-streak="{{ streak }}"{% if data %} data-result="{{ 'correct' if is_correct else 'incorrect' }}"{% endif %}>
-            <div class="arena-bar">
-                <h1 id="page-title">{% if data %}The final score{% else %}Pick the winner{% endif %}</h1>
-                <div class="streak-counter" aria-label="Current streak: {{ streak }} correct {{ 'guess' if streak == 1 else 'guesses' }} in a row">
-                    <span class="streak-label">Current streak</span><span class="streak-number">{{ streak }}</span>
-                </div>
+<section class="arena{% if data %} arena--answered{% endif %}" id="arena" aria-labelledby="page-title" aria-describedby="scoring-rules" tabindex="-1" data-streak="{{ streak }}"{% if data %} data-result="{{ 'correct' if is_correct else 'incorrect' }}"{% endif %}>
+    <div class="arena-bar">
+        <div>
+            <h1 id="page-title">{% if data %}The final score<span class="brand-period">.</span>{% else %}Who wins<span class="brand-period">?</span>{% endif %}</h1>
+            <p class="round-instruction">{% if data %}The stats are in. Here’s how it adds up.{% elif round_answered %}You’ve played this round. Start a new one below.{% else %}Pick a country or a draw.{% endif %}</p>
+        </div>
+        <div class="streak-counter" aria-label="Current streak: {{ streak }} correct {{ 'guess' if streak == 1 else 'guesses' }} in a row">
+            {{ ui.icon('achievements') }}
+            <span class="streak-number">{{ streak }}</span><span class="streak-label"><span class="streak-current">Current </span>streak</span>
+        </div>
+    </div>
+    <div class="game-rules" id="scoring-rules" role="group" aria-label="Scoring rules">
+        <span class="rule-item">{{ ui.icon('people') }} More people <span class="rule-point">+1<span class="sr-only"> point</span></span></span>
+        <span class="rule-item">{{ ui.icon('area') }} Larger area <span class="rule-point">+1<span class="sr-only"> point</span></span></span>
+        <span class="rule-outcome">Highest score wins. <strong id="draw-rule">Equal points = draw.</strong></span>
+    </div>
+    <form id="guess-form" class="guess-form" method="post" action="{{ url_for('index') }}" aria-label="Choose the round outcome">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="country1" value="{{ country_1 }}">
+        <input type="hidden" name="country2" value="{{ country_2 }}">
+        <div class="matchup">
+            {{ contender(country_1, country_1_flag, 'country1', '01', country_2) }}
+            <span class="versus" aria-label="versus">VS</span>
+            {{ contender(country_2, country_2_flag, 'country2', '02', country_1) }}
+        </div>
+    </form>
+    <div class="round-footer{% if round_answered %} round-footer--answered{% endif %}">
+        {% if not round_answered %}
+        <div class="round-controls">
+            <div class="round-actions" role="group" aria-label="Pick the winner or a draw">
+                <button class="country-choice" type="submit" form="guess-form" name="guess" value="country1" aria-label="Pick {{ country_1 }} to win" title="{{ country_1 }}">
+                    <span class="choice-label">{{ country_1 }}</span><span class="choice-pending">Revealing…</span>
+                </button>
+                <button class="draw-button" type="submit" form="guess-form" name="guess" value="draw" aria-describedby="draw-rule">{{ ui.icon('equal') }} <span class="choice-label">Draw</span><span class="choice-pending">Revealing…</span></button>
+                <button class="country-choice" type="submit" form="guess-form" name="guess" value="country2" aria-label="Pick {{ country_2 }} to win" title="{{ country_2 }}">
+                    <span class="choice-label">{{ country_2 }}</span><span class="choice-pending">Revealing…</span>
+                </button>
             </div>
-            <div class="game-rules" role="group" aria-label="Scoring rules">
-                <span class="rule-item">{{ ui.icon('people') }} More people <span class="rule-point">+1<span class="sr-only"> point</span></span></span>
-                <span class="rule-item">{{ ui.icon('area') }} More land <span class="rule-point">+1<span class="sr-only"> point</span></span></span>
+            <p class="round-hint">{{ ui.icon('lock') }} Stats reveal after your pick</p>
+        </div>
+        {% else %}
+        {% if data %}
+        <div class="result-message {{ 'result-message--correct' if is_correct else 'result-message--incorrect' }}">
+            <span class="result-icon">{{ ui.icon('check' if is_correct else 'close') }}</span>
+            <div>
+                <h2>{{ 'Correct call.' if is_correct else 'Incorrect call.' }}</h2>
+                <p>{% if data[country_1]['Points'] == data[country_2]['Points'] %}A draw. {{ data[country_1]['Points'] }} {{ 'point' if data[country_1]['Points'] == 1 else 'points' }} each.{% elif data[country_1]['Points'] > data[country_2]['Points'] %}{{ country_1 }} wins, {{ data[country_1]['Points'] }}–{{ data[country_2]['Points'] }}.{% else %}{{ country_2 }} wins, {{ data[country_2]['Points'] }}–{{ data[country_1]['Points'] }}.{% endif %}{% if request.form.get('guess') == 'draw' %} You picked a draw.{% endif %}</p>
             </div>
-            <form id="guess-form" class="guess-form" method="post" action="{{ url_for('index') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="country1" value="{{ country_1 }}">
-                <input type="hidden" name="country2" value="{{ country_2 }}">
-                <div class="matchup">
-                    {{ contender(country_1, country_1_flag, 'country1', '01', country_2) }}
-                    <span class="versus" aria-label="versus">VS</span>
-                    {{ contender(country_2, country_2_flag, 'country2', '02', country_1) }}
-                </div>
+        </div>
+        {% endif %}
+        <div class="round-controls">
+            <form class="new-matchup-form" method="get" action="{{ url_for('index') }}">
+                <button class="new-matchup-button new-matchup-button--next" type="submit"><span class="choice-label">New round</span><span class="choice-pending">Loading…</span> {{ ui.icon('arrow') }}</button>
             </form>
-            <div class="round-footer{% if round_answered %} round-footer--answered{% endif %}">
-                {% if not round_answered %}
-                <div class="draw-choice">
-                    <button class="draw-button" type="submit" form="guess-form" name="guess" value="draw">{{ ui.icon('equal') }} Equal points ? - Pick a draw</button>
-                </div>
-                {% else %}
-                {% if data %}
-                <div class="result-message {{ 'result-message--correct' if is_correct else 'result-message--incorrect' }}">
-                    <span class="result-icon">{{ ui.icon('check' if is_correct else 'close') }}</span>
-                    <div>
-                        <h2>{{ 'Correct call.' if is_correct else 'Incorrect call.' }}</h2>
-                        <p>{% if data[country_1]['Points'] == data[country_2]['Points'] %}A draw. {{ data[country_1]['Points'] }} {{ 'point' if data[country_1]['Points'] == 1 else 'points' }} each.{% elif data[country_1]['Points'] > data[country_2]['Points'] %}{{ country_1 }} wins, {{ data[country_1]['Points'] }}–{{ data[country_2]['Points'] }}.{% else %}{{ country_2 }} wins, {{ data[country_2]['Points'] }}–{{ data[country_1]['Points'] }}.{% endif %}{% if request.form.get('guess') == 'draw' %} You picked a draw.{% endif %}</p>
-                    </div>
-                </div>
-                {% endif %}
-                <form class="new-matchup-form" method="get" action="{{ url_for('index') }}">
-                    <button class="new-matchup-button new-matchup-button--next" type="submit">{{ ui.icon('shuffle') }} New round {{ ui.icon('arrow') }}</button>
-                </form>
-                {% endif %}
-            </div>
-        </section>
+        </div>
+        {% endif %}
+    </div>
+</section>
