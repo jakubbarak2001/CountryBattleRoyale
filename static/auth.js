@@ -4,7 +4,7 @@ function setupAuthDialog(name) {
     const password = document.querySelector(`#${name}-password`);
     const passwordToggle = document.querySelector(`#toggle-${name}-password`);
 
-    document.querySelector(`#open-${name}`).addEventListener("click", () => {
+    document.querySelector(`#open-${name}`)?.addEventListener("click", () => {
         dialog.showModal();
     });
 
@@ -31,7 +31,7 @@ function setupAuthDialog(name) {
         }
     });
 
-    passwordToggle.addEventListener("click", () => {
+    passwordToggle?.addEventListener("click", () => {
         const showPassword = password.type === "password";
         password.type = showPassword ? "text" : "password";
         passwordToggle.textContent = showPassword ? "Hide" : "Show";
@@ -41,6 +41,7 @@ function setupAuthDialog(name) {
 
     dialog.addEventListener("close", () => {
         form.reset();
+        if (!password || !passwordToggle) return;
         password.type = "password";
         passwordToggle.textContent = "Show";
         passwordToggle.setAttribute("aria-label", "Show password");
@@ -49,7 +50,50 @@ function setupAuthDialog(name) {
 }
 
 setupAuthDialog("register");
+setupAuthDialog("register-token");
 setupAuthDialog("login");
+
+function setupRegistrationToken() {
+    const dialog = document.querySelector("#register-token-dialog");
+    const form = document.querySelector("#register-token-form");
+    const token = document.querySelector("#register-token");
+    const error = document.querySelector("#register-token-error");
+    const status = document.querySelector("#register-token-status");
+
+    function clearFeedback() {
+        token.removeAttribute("aria-invalid");
+        error.hidden = true;
+        error.textContent = "";
+        status.hidden = true;
+        status.textContent = "";
+    }
+
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        clearFeedback();
+        token.value = token.value.trim();
+        if (!token.value) {
+            token.setAttribute("aria-invalid", "true");
+            error.textContent = "Enter the authentication token.";
+            error.hidden = false;
+            token.focus();
+            return;
+        }
+
+        // Replace this preview with a server request once verification exists.
+        status.textContent = "Token entered. Verification is not connected yet; no account has been created or signed in.";
+        status.hidden = false;
+        status.focus();
+    });
+
+    token.addEventListener("input", clearFeedback);
+    dialog.addEventListener("close", () => {
+        clearFeedback();
+        document.querySelector("#register-token-email").textContent = "your email address";
+    });
+}
+
+setupRegistrationToken();
 
 const accountMenu = document.querySelector("#account-menu");
 const accountToggle = accountMenu.querySelector("summary");
@@ -85,7 +129,6 @@ function setupRegistration() {
     const submit = form.querySelector('[type="submit"]');
     const success = document.querySelector("#register-success");
     const successMessage = document.querySelector("#register-success-message");
-    const guest = dialog.querySelector(".auth-guest");
     const controls = [...form.querySelectorAll("input, button")];
     let pending = false;
     let dialogVersion = 0;
@@ -174,7 +217,6 @@ function setupRegistration() {
                 ? `Your account is ready, ${result.name}.`
                 : "Your account has been created. The next matchup awaits.";
             success.hidden = false;
-            guest.textContent = "Back to game";
             success.focus();
         } else if (response?.status === 429) {
             showErrors({ form: "Too many registration attempts. Please wait before trying again." });
@@ -203,7 +245,6 @@ function setupRegistration() {
         form.hidden = false;
         success.hidden = true;
         successMessage.textContent = "";
-        guest.textContent = "Keep playing as a guest";
         if (!accountMenu.hidden) accountToggle.focus();
     });
 

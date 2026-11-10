@@ -1,5 +1,6 @@
 {% set registration_errors = registration_errors|default({}, true) %}
 {% set registration_values = registration_values|default({}, true) %}
+
 <dialog class="auth-dialog" id="register-dialog" aria-labelledby="register-title" aria-describedby="register-description">
     <button class="auth-close" type="button" data-close-auth aria-label="Close registration">{{ ui.icon('close') }}</button>
     <p class="eyebrow auth-eyebrow">Country Battle Royale / Register</p>
@@ -34,7 +35,24 @@
         <p id="register-success-message"></p>
     </div>
     <p class="auth-switch">Already have an account? <button type="button" data-auth-switch="login">Log in</button></p>
-    <button class="auth-guest" type="button" data-close-auth>Keep playing as a guest</button>
+</dialog>
+
+<dialog class="auth-dialog" id="register-token-dialog" aria-labelledby="register-token-title" aria-describedby="register-token-description register-token-preview">
+    <button class="auth-close" type="button" data-close-auth aria-label="Close token confirmation">{{ ui.icon('close') }}</button>
+    <p class="eyebrow auth-eyebrow">Country Battle Royale / Register</p>
+    <h2 id="register-token-title">Confirm your token<span class="brand-period">.</span></h2>
+    <p class="auth-intro" id="register-token-description">Enter the authentication token for <strong id="register-token-email">your email address</strong>.</p>
+    <form id="register-token-form" class="auth-form" method="dialog">
+        <div class="auth-field">
+            <label for="register-token">Authentication token</label>
+            <input id="register-token" name="token" type="text" autocomplete="one-time-code" autocapitalize="none" spellcheck="false" placeholder="Enter your token" aria-describedby="register-token-preview register-token-error" required autofocus>
+            <p class="auth-hint" id="register-token-preview">Frontend preview: no email is sent and tokens are not verified yet.</p>
+            <p class="auth-error" id="register-token-error" role="alert" hidden></p>
+        </div>
+        <button class="auth-submit" type="submit">Submit token</button>
+    </form>
+    <p class="auth-hint" id="register-token-status" role="status" tabindex="-1" hidden></p>
+    <p class="auth-switch"><button type="button" data-auth-switch="register">Back to registration</button></p>
 </dialog>
 
 <dialog class="auth-dialog" id="login-dialog" aria-labelledby="login-title" aria-describedby="login-description">
@@ -59,5 +77,4 @@
         <button class="auth-submit" type="submit">Log in</button>
     </form>
     <p class="auth-switch">New to the battle? <button type="button" data-auth-switch="register">Create an account</button></p>
-    <button class="auth-guest" type="button" data-close-auth>Keep playing as a guest</button>
 </dialog>

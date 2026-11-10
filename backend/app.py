@@ -8,6 +8,7 @@ from flask import Flask, render_template, request, session, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf import CSRFProtect
+from flask_mail import Mail, Message
 import os
 from dotenv import load_dotenv
 from werkzeug.utils import redirect
@@ -27,6 +28,13 @@ limiter = Limiter(
     storage_uri=os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0"),
     strategy="moving-window",
 )
+
+# app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+# app.config['MAIL_PORT'] = 465
+# app.config['MAIL_USE_TLS'] = True
+# app.config['MAIL_USE_SSL'] = True
+# mail = Mail(app)
+# message = Message("Welcome to Flask-Mail!", sender="", recipients=[""])
 
 def get_game_context(country_comparison=None):
     country_1, country_2 = session["current_countries"]
@@ -64,8 +72,11 @@ def index():
             with limiter.limit("60 per minute;1500 per hour"):
                 session.permanent = True
 
-                country_comparison = select_and_compare_random_countries()
+                country_comparison = select_and_compare_random_countries(
+                    session.get("current_countries", ())
+                )
                 session["current_countries"] = list(country_comparison.keys())
+
                 session["answered"] = False
                 if not session.get("guest_id"):
                     session["guest_id"] = token_urlsafe(32)

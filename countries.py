@@ -92,8 +92,9 @@ def compare_two_countries(country1, country2):
     return stats
 
 
-def select_and_compare_random_countries():
-    country_names = list(_country_catalog())
+def select_and_compare_random_countries(previous_countries=()):
+    previous_names = {name.casefold() for name in previous_countries}
+    country_names = [name for name in _country_catalog() if name not in previous_names]
     country1, country2 = sample(country_names, 2)
 
     return compare_two_countries(country1, country2)
