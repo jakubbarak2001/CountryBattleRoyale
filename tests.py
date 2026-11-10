@@ -12,7 +12,6 @@ import backend.app
 from backend.app import app, limiter
 from countries import compare_two_countries
 
-
 class GameTests(TestCase):
     @patch("countries.get_country_data")
     def test_compare_two_countries(self, mock_country_data):
@@ -164,7 +163,7 @@ class AuthenticationTests(TestCase):
         response = client.get("/?new_matchup=1", headers={"X-Requested-With": "fetch"})
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("<!DOCTYPE html>", response.get_data(as_text=True))
-        mock_select.assert_called_once_with()
+        mock_select.assert_called_once_with(["France", "Spain"])
         mock_compare.assert_not_called()
         self.mock_create_round.assert_called_once_with(guest_id="guest")
         self.mock_complete_round.assert_not_called()
